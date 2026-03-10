@@ -352,7 +352,7 @@ function RegistrationContent() {
         <Card key={registration._id}>
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-slate-600 text-sm">Semester {registration.semesterLabel} · {registration.academicYear}</span>
-            <Badge variant="error">REJECTED</Badge>
+            <Badge variant="danger">REJECTED</Badge>
           </div>
           <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
             ✗ Registration rejected.{registration.rejectionReason && <span className="block mt-1 font-medium">Reason: {registration.rejectionReason}</span>}
