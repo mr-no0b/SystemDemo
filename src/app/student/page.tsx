@@ -144,8 +144,8 @@ export default async function StudentDashboard() {
                 const course = offering?.courseId as Record<string, unknown>;
                 const teacher = offering?.teacherId as Record<string, unknown>;
                 const oid = (offering?._id as object)?.toString() ?? "";
-                const att = data.attendanceSummary[oid] ?? { present: 0, total: 0 };
-                const pct = att.total > 0 ? Math.round((att.present / att.total) * 100) : 0;
+                const att = data.attendanceSummary[oid] ?? { present: 0, plannedClasses: 0 };
+                const pct = att.plannedClasses > 0 ? Math.round((att.present / att.plannedClasses) * 100) : 0;
                 return (
                   <div key={en._id as string} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
