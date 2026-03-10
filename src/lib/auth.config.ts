@@ -4,6 +4,7 @@ import type { NextAuthConfig } from "next-auth";
 // Used by middleware (Edge runtime) for session/JWT reading only.
 export const authConfig: NextAuthConfig = {
   providers: [], // providers only needed in the Node.js runtime (auth.ts)
+  trustHost: true,
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
