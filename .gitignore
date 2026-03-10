@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev notes / credentials
+mongodbconnection.txt
+CODEBASE_CONTEXT.md
+sample.html
+*.pdf
+.vscode/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
