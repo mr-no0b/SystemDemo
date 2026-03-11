@@ -104,15 +104,15 @@ export async function POST(req: NextRequest) {
   if (scope === "departmental" && resolvedDeptId) userQuery.departmentId = resolvedDeptId;
 
   const publisher = await User.findById(session.user.id).lean();
-  const targetUsers = await User.find(userQuery).select("_id name email").lean();
+  const targetUsers = await User.find(userQuery).select("_id name email role").lean();
   const userIds = targetUsers.map((u) => u._id);
 
-  await createNotificationsForMany(userIds, {
-    title: `Notice: ${title}`,
-    message: content.slice(0, 120) + (content.length > 120 ? "…" : ""),
-    type: "notice",
-    link: "/teacher/notices",
-  });
+  // Create per-user notifications with correct role-based link
+  const studentIds = targetUsers.filter((u) => (u as { role?: string }).role === "student").map((u) => u._id);
+  const teacherIds = targetUsers.filter((u) => (u as { role?: string }).role === "teacher").map((u) => u._id);
+  const notifBase = { title: `Notice: ${title}`, message: content.slice(0, 120) + (content.length > 120 ? "…" : ""), type: "notice" as const };
+  if (studentIds.length) await createNotificationsForMany(studentIds, { ...notifBase, link: "/student/notices" });
+  if (teacherIds.length) await createNotificationsForMany(teacherIds, { ...notifBase, link: "/teacher/notices" });
 
   // Send emails (fire-and-forget)
   const publisherName = publisher?.name ?? "Administration";
