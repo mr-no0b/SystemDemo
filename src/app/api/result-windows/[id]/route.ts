@@ -10,6 +10,8 @@ import { Enrollment } from "@/models/Enrollment";
 import { AttendanceRecord } from "@/models/AttendanceRecord";
 import { AttendanceSession } from "@/models/AttendanceSession";
 import { calculateGPA, getGrade } from "@/lib/utils";
+import { createNotificationsForMany } from "@/lib/notify";
+import { sendEmail, resultPublishedEmail } from "@/lib/email";
 
 export async function GET(
   req: NextRequest,
@@ -290,6 +292,17 @@ export async function PATCH(
 
   // Semester-end cleanup: unassign teachers, delete attendance & enrollments
   await runSemesterCleanup(resultWindow.semesterLabel, resultWindow.academicYear);
+
+  // Notify all students whose results were published
+  try {
+    const studentIds = publishedResults.map((r) => (r as { studentId?: unknown }).studentId ?? (r as { _id: unknown })._id).filter(Boolean);
+    const students = await User.find({ _id: { $in: studentIds }, isActive: true }).select("_id name email").lean();
+    const ids = students.map((s) => s._id);
+    await createNotificationsForMany(ids, { title: "Results Published 🎓", message: `Results for Semester ${resultWindow.semesterLabel} (${resultWindow.academicYear}) are now available.`, type: "result", link: "/student/results" });
+    for (const student of students) {
+      if (student.email) sendEmail({ to: student.email, subject: `Results Published — Semester ${resultWindow.semesterLabel}`, html: resultPublishedEmail({ recipientName: student.name, semesterLabel: resultWindow.semesterLabel, academicYear: resultWindow.academicYear }) });
+    }
+  } catch (err) { console.error("[result-window] notification error:", err); }
 
   return NextResponse.json({
     success: true,

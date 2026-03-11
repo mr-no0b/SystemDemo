@@ -5,6 +5,9 @@ import { Election } from "@/models/Election";
 import { ElectionCandidate } from "@/models/ElectionCandidate";
 import { ElectionVote } from "@/models/ElectionVote";
 import { Department } from "@/models/Department";
+import { User } from "@/models/User";
+import { createNotificationsForMany } from "@/lib/notify";
+import { sendEmail, electionUpdateEmail } from "@/lib/email";
 
 const NEXT_STATUS: Record<string, string> = {
   draft: "applications_open",
@@ -55,6 +58,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     election.status = next as typeof election.status;
     await election.save();
+
+    // Notify all students + teachers in the department
+    try {
+      const deptUsers = await User.find({ departmentId: election.departmentId, isActive: true }).select("_id name email").lean();
+      const userIds = deptUsers.map((u) => u._id);
+      const statusLabels: Record<string, string> = { applications_open: "Applications are now open", voting: "Voting has started", completed: "Election results are out" };
+      const statusLabel = statusLabels[next] ?? next;
+      await createNotificationsForMany(userIds, { title: `Election Update: ${election.title ?? "Departmental Election"}`, message: statusLabel, type: "election", link: "/student/elections" });
+      for (const user of deptUsers) {
+        if (user.email) sendEmail({ to: user.email, subject: `Election Update: ${election.title ?? "Election"}`, html: electionUpdateEmail({ recipientName: user.name, electionTitle: election.title ?? "Election", newStatus: next }) });
+      }
+    } catch (err) { console.error("[election] notification error:", err); }
+
     return NextResponse.json({ success: true, status: election.status, winnerId });
   }
 

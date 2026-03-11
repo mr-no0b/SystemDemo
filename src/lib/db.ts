@@ -20,6 +20,7 @@ import "@/models/ElectionCandidate";
 import "@/models/ElectionVote";
 import "@/models/Note";
 import "@/models/BookRecommendation";
+import "@/models/Notification";
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 

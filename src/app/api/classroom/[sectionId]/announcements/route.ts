@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import { Notice } from "@/models/Notice";
 import { CourseSection } from "@/models/CourseSection";
+import { Enrollment } from "@/models/Enrollment";
+import { User } from "@/models/User";
+import { createNotificationsForMany } from "@/lib/notify";
+import { sendEmail, announcementEmail } from "@/lib/email";
 
 export async function GET(
   req: NextRequest,
@@ -56,6 +60,38 @@ export async function POST(
   });
 
   const populated = await notice.populate("publishedBy", "name userId");
+
+  // Notify enrolled students
+  try {
+    const enrollments = await Enrollment.find({ courseOfferingId: sectionId }).select("studentId").lean();
+    const studentIds = enrollments.map((e) => e.studentId);
+    const teacher = await User.findById(session.user.id).lean();
+    const coursePopulated = await CourseSection.findById(sectionId).populate("courseId", "code title").lean() as { courseId?: { code?: string; title?: string } } | null;
+    const courseCode = coursePopulated?.courseId?.code ?? "Course";
+    const courseTitle = coursePopulated?.courseId?.title ?? "";
+    const teacherName = teacher?.name ?? "Teacher";
+
+    await createNotificationsForMany(studentIds, {
+      title: `Announcement in ${courseCode}`,
+      message: title.slice(0, 100),
+      type: "announcement",
+      link: "/student/classroom",
+    });
+
+    const students = await User.find({ _id: { $in: studentIds }, email: { $exists: true, $ne: "" } }).select("name email").lean();
+    for (const student of students) {
+      if (student.email) {
+        sendEmail({
+          to: student.email,
+          subject: `New Announcement in ${courseCode}`,
+          html: announcementEmail({ recipientName: student.name, courseCode, courseTitle, announcementTitle: title, announcementContent: content, teacherName }),
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[announcement] notification/email error:", err);
+  }
+
   return NextResponse.json({ success: true, data: populated }, { status: 201 });
 }
 

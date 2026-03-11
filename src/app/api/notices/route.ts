@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import { Notice } from "@/models/Notice";
+import { User } from "@/models/User";
+import { createNotificationsForMany } from "@/lib/notify";
+import { sendEmail, noticeEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -92,6 +95,36 @@ export async function POST(req: NextRequest) {
     expiresAt: expiresAt ?? undefined,
     attachmentLink: attachmentLink ?? undefined,
   });
+
+  // Build query for target users
+  const userQuery: Record<string, unknown> = { isActive: true };
+  if (target === "students") userQuery.role = "student";
+  else if (target === "teachers") userQuery.role = "teacher";
+  else userQuery.role = { $in: ["student", "teacher"] };
+  if (scope === "departmental" && resolvedDeptId) userQuery.departmentId = resolvedDeptId;
+
+  const publisher = await User.findById(session.user.id).lean();
+  const targetUsers = await User.find(userQuery).select("_id name email").lean();
+  const userIds = targetUsers.map((u) => u._id);
+
+  await createNotificationsForMany(userIds, {
+    title: `Notice: ${title}`,
+    message: content.slice(0, 120) + (content.length > 120 ? "…" : ""),
+    type: "notice",
+    link: "/teacher/notices",
+  });
+
+  // Send emails (fire-and-forget)
+  const publisherName = publisher?.name ?? "Administration";
+  for (const user of targetUsers) {
+    if (user.email) {
+      sendEmail({
+        to: user.email,
+        subject: `New Notice: ${title}`,
+        html: noticeEmail({ recipientName: user.name, noticeTitle: title, noticeContent: content, publisherName }),
+      });
+    }
+  }
 
   return NextResponse.json({ success: true, data: notice }, { status: 201 });
 }

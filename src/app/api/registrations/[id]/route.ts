@@ -5,6 +5,8 @@ import { Registration } from "@/models/Registration";
 import { Enrollment } from "@/models/Enrollment";
 import { User } from "@/models/User";
 import { CourseSection } from "@/models/CourseSection";
+import { createNotification } from "@/lib/notify";
+import { sendEmail, registrationStatusEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,13 +35,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!reg) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (action === "advisor_approve" && role === "teacher" && reg.status === "pending_advisor") {
-    // Only the advisor assigned to this registration may approve it
     if (!reg.advisorId || reg.advisorId.toString() !== session.user.id) {
       return NextResponse.json({ error: "You are not the assigned advisor for this registration" }, { status: 403 });
     }
     reg.status = "pending_head";
     reg.advisorApprovedAt = new Date();
     await reg.save();
+
+    // Notify student
+    const student = await User.findById(reg.studentId).lean();
+    if (student) {
+      await createNotification({ userId: reg.studentId, title: "Registration Approved by Advisor", message: `Your registration for Semester ${reg.semesterLabel} (${reg.academicYear}) has been approved by your advisor and is now pending Head approval.`, type: "registration", link: "/student/registration" });
+      if (student.email) await sendEmail({ to: student.email, subject: "Registration Approved by Advisor", html: registrationStatusEmail({ studentName: student.name, status: "pending_head", semesterLabel: reg.semesterLabel, academicYear: reg.academicYear }) });
+    }
+
     return NextResponse.json({ success: true, data: reg });
   }
 
@@ -48,6 +57,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     reg.headId = session.user.id as unknown as typeof reg.headId;
     reg.headApprovedAt = new Date();
     await reg.save();
+
+    const student = await User.findById(reg.studentId).lean();
+    if (student) {
+      await createNotification({ userId: reg.studentId, title: "Registration Approved — Payment Required", message: `Your registration for Semester ${reg.semesterLabel} (${reg.academicYear}) has been approved. Please complete payment to confirm enrollment.`, type: "registration", link: "/student/registration" });
+      if (student.email) await sendEmail({ to: student.email, subject: "Registration Approved — Payment Required", html: registrationStatusEmail({ studentName: student.name, status: "payment_pending", semesterLabel: reg.semesterLabel, academicYear: reg.academicYear }) });
+    }
+
     return NextResponse.json({ success: true, data: reg });
   }
 
@@ -105,6 +121,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .populate("headId", "name")
       .lean();
 
+    // Notify student of admission
+    const studentPay = await User.findById(reg.studentId).lean();
+    if (studentPay) {
+      await createNotification({ userId: reg.studentId, title: "Enrollment Confirmed ✅", message: `You have been enrolled for Semester ${reg.semesterLabel} (${reg.academicYear}). Welcome!`, type: "registration", link: "/student" });
+      if (studentPay.email) await sendEmail({ to: studentPay.email, subject: "Enrollment Confirmed", html: registrationStatusEmail({ studentName: studentPay.name, status: "admitted", semesterLabel: reg.semesterLabel, academicYear: reg.academicYear }) });
+    }
+
     return NextResponse.json({ success: true, data: populated });
   }
 
@@ -155,6 +178,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     reg.status = "rejected";
     reg.rejectionReason = rejectionReason;
     await reg.save();
+
+    const studentRej = await User.findById(reg.studentId).lean();
+    if (studentRej) {
+      await createNotification({ userId: reg.studentId, title: "Registration Rejected", message: `Your registration for Semester ${reg.semesterLabel} (${reg.academicYear}) was rejected.${rejectionReason ? " Reason: " + rejectionReason : ""}`, type: "registration", link: "/student/registration" });
+      if (studentRej.email) await sendEmail({ to: studentRej.email, subject: "Registration Rejected", html: registrationStatusEmail({ studentName: studentRej.name, status: "rejected", semesterLabel: reg.semesterLabel, academicYear: reg.academicYear, reason: rejectionReason }) });
+    }
+
     return NextResponse.json({ success: true, data: reg });
   }
 
