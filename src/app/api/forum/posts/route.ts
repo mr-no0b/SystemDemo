@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import { ForumPost } from "@/models/ForumPost";
 import { ForumAnswer } from "@/models/ForumAnswer";
 import { User } from "@/models/User";
+import { encodeForumQuestion, findSimilarSolvedQuestions, FORUM_VECTOR_VERSION } from "@/lib/forum-similarity";
 
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -52,6 +53,70 @@ export async function POST(req: NextRequest) {
 
   if (!title || !body) {
     return NextResponse.json({ error: "Title and body required" }, { status: 400 });
+  }
+
+  const encodedQuestion = encodeForumQuestion({ title, body });
+  const solvedPosts = await ForumPost.find({
+    isModerated: false,
+    acceptedAnswerId: { $exists: true, $ne: null },
+  })
+    .select("title body forumVector forumTitleVector forumVectorVersion")
+    .lean();
+
+  const postsNeedingVectorRefresh = solvedPosts
+    .filter((post) =>
+      post.forumVectorVersion !== FORUM_VECTOR_VERSION ||
+      !Array.isArray(post.forumVector) ||
+      !Array.isArray(post.forumTitleVector)
+    )
+    .map((post) => {
+      const refreshedVector = encodeForumQuestion({
+        title: post.title,
+        body: post.body,
+      });
+
+      return {
+        updateOne: {
+          filter: { _id: post._id },
+          update: {
+            $set: {
+              forumVector: refreshedVector.forumVector,
+              forumTitleVector: refreshedVector.forumTitleVector,
+              forumVectorVersion: refreshedVector.forumVectorVersion,
+            },
+          },
+        },
+      };
+    });
+
+  if (postsNeedingVectorRefresh.length > 0) {
+    await ForumPost.bulkWrite(postsNeedingVectorRefresh);
+  }
+
+  const similarSolvedQuestions = findSimilarSolvedQuestions(
+    { title, body },
+    solvedPosts.map((post) => ({
+      id: String(post._id),
+      title: post.title,
+      forumVector:
+        post.forumVectorVersion === FORUM_VECTOR_VERSION && Array.isArray(post.forumVector)
+          ? post.forumVector
+          : encodeForumQuestion({ title: post.title, body: post.body }).forumVector,
+      forumTitleVector:
+        post.forumVectorVersion === FORUM_VECTOR_VERSION && Array.isArray(post.forumTitleVector)
+          ? post.forumTitleVector
+          : encodeForumQuestion({ title: post.title, body: post.body }).forumTitleVector,
+    }))
+  );
+
+  if (similarSolvedQuestions.length > 0) {
+    return NextResponse.json(
+      {
+        error: "A very similar solved question already exists. Please review it before posting.",
+        similarSolvedQuestions,
+      },
+      { status: 409 }
+    );
   }
 
   const post = await ForumPost.create({

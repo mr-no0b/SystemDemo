@@ -13,6 +13,12 @@ import {
 } from "@phosphor-icons/react";
 import { timeAgo } from "@/lib/utils";
 
+type SimilarSolvedQuestion = {
+  id: string;
+  title: string;
+  similarity: number;
+};
+
 type Post = {
   _id: string;
   title: string;
@@ -52,6 +58,7 @@ export default function ForumPage() {
   const [showBanList, setShowBanList] = useState(false);
   const [bannedStudents, setBannedStudents] = useState<BannedStudent[]>([]);
   const [banListLoading, setBanListLoading] = useState(false);
+  const [blockedMatches, setBlockedMatches] = useState<SimilarSolvedQuestion[]>([]);
 
   useEffect(() => {
     if (session?.user?.role === "student") {
@@ -101,6 +108,7 @@ export default function ForumPage() {
   async function handleAsk() {
     if (!form.title.trim() || !form.body.trim()) return;
     setSubmitting(true);
+    setBlockedMatches([]);
     const res = await fetch("/api/forum/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -112,6 +120,9 @@ export default function ForumPage() {
       setShowAsk(false);
       setForm({ title: "", body: "", tags: "" });
       router.push(`/forum/${d.data._id}`);
+    } else if (res.status === 409) {
+      setBlockedMatches(d.similarSolvedQuestions ?? []);
+      addToast(d.error || "A similar solved question already exists", "warning");
     } else {
       addToast(d.error || "Failed to post", "error");
     }
@@ -237,22 +248,44 @@ export default function ForumPage() {
 
       <Modal isOpen={showAsk} onClose={() => setShowAsk(false)} title="Ask a Question" maxWidth="lg">
         <div className="space-y-4">
+          {blockedMatches.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-800">
+                This question was blocked because it looks very similar to solved questions already in the forum.
+              </p>
+              <div className="mt-3 space-y-2">
+                {blockedMatches.map((match) => (
+                  <button
+                    key={match.id}
+                    type="button"
+                    onClick={() => router.push(`/forum/${match.id}`)}
+                    className="block w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-left hover:border-indigo-300 hover:bg-indigo-50 transition"
+                  >
+                    <span className="block text-sm font-medium text-slate-700">{match.title}</span>
+                    <span className="block mt-1 text-xs text-slate-500">
+                      Similarity: {(match.similarity * 100).toFixed(0)}% · Open solved question
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Question Title *</label>
             <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+              value={form.title} onChange={(e) => { setBlockedMatches([]); setForm({ ...form, title: e.target.value }); }}
               placeholder="What is your question? Be specific." />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Details *</label>
             <textarea rows={5} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
-              value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
+              value={form.body} onChange={(e) => { setBlockedMatches([]); setForm({ ...form, body: e.target.value }); }}
               placeholder="Provide all details needed to answer your question..." />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Tags (comma-separated)</label>
             <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
+              value={form.tags} onChange={(e) => { setBlockedMatches([]); setForm({ ...form, tags: e.target.value }); }}
               placeholder="e.g. algorithms, homework, exam" />
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -62,6 +63,8 @@ export default function RegistrationPage() {
 function RegistrationContent() {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +76,6 @@ function RegistrationContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingOfferings, setLoadingOfferings] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [paying, setPaying] = useState<string | null>(null);
-
   const fetchAll = useCallback(async () => {
     const [regRes, winRes, resultRes] = await Promise.all([
       fetch("/api/registrations"),
@@ -91,6 +92,17 @@ function RegistrationContent() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment !== "success") return;
+    toast("Payment successful! You are now admitted. 🎉", "success");
+    fetchAll();
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("payment");
+    const query = next.toString();
+    router.replace(query ? `/student/registration?${query}` : "/student/registration");
+  }, [fetchAll, router, searchParams, toast]);
 
   const selectedWindow = openWindows.find((w) => w._id === selectedWindowId) ?? null;
   const semester = selectedWindow?.semesterLabel ?? "";
@@ -178,19 +190,8 @@ function RegistrationContent() {
     setSubmitting(false);
   }
 
-  async function handlePay(regId: string) {
-    setPaying(regId);
-    const res = await fetch(`/api/registrations/${regId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "pay" }),
-    });
-    const d = await res.json();
-    if (d.success) {
-      fetchAll();
-      toast("Payment complete! You are now admitted. 🎉", "success");
-    } else toast(d.error ?? "Payment failed", "error");
-    setPaying(null);
+  function handlePay(regId: string) {
+    router.push(`/student/registration/payment/${regId}`);
   }
 
   if (loading) return <div className="flex justify-center py-24"><Spinner /></div>;
@@ -335,7 +336,7 @@ function RegistrationContent() {
             {registration.status === "payment_pending" && (
               <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
                 <span className="text-sm text-indigo-700 font-medium">✓ Both approvals received. Pay to get admitted immediately.</span>
-                <Button onClick={() => handlePay(registration._id)} isLoading={paying === registration._id} size="sm">Pay &amp; Get Admitted</Button>
+                <Button onClick={() => handlePay(registration._id)} size="sm">Pay &amp; Get Admitted</Button>
               </div>
             )}
             {registration.status === "admitted" && (

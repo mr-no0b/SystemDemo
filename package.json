@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed": "ts-node --project tsconfig.json -r tsconfig-paths/register src/scripts/seed.ts"
+    "reset:keep-admin": "ts-node --project tsconfig.json -r tsconfig-paths/register src/scripts/reset-keep-admin.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

@@ -8,26 +8,23 @@ import { cn } from "@/lib/cn";
 
 type Role = "student" | "teacher" | "admin";
 
-const roles: { id: Role; label: string; icon: React.ReactNode; placeholder: string; demoId: string; demoPassword: string }[] = [
-  { id: "student", label: "Student", icon: <Student size={28} />, placeholder: "e.g. S1", demoId: "S1", demoPassword: "pass123" },
-  { id: "teacher", label: "Teacher", icon: <ChalkboardTeacher size={28} />, placeholder: "e.g. T1", demoId: "T1", demoPassword: "pass123" },
-  { id: "admin", label: "Admin", icon: <ShieldCheck size={28} />, placeholder: "e.g. admin", demoId: "admin", demoPassword: "admin123" },
+const roles: { id: Role; label: string; icon: React.ReactNode; placeholder: string }[] = [
+  { id: "student", label: "Student", icon: <Student size={28} />, placeholder: "Enter your student ID" },
+  { id: "teacher", label: "Teacher", icon: <ChalkboardTeacher size={28} />, placeholder: "Enter your teacher ID" },
+  { id: "admin", label: "Admin", icon: <ShieldCheck size={28} />, placeholder: "Enter your admin ID" },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<Role>("student");
-  const [userId, setUserId] = useState("S1");
-  const [password, setPassword] = useState("pass123");
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    const r = roles.find((r) => r.id === role)!;
-    setUserId(r.demoId);
-    setPassword(r.demoPassword);
     setError("");
   };
 
@@ -98,7 +95,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               University ID
@@ -109,6 +106,7 @@ export default function LoginPage() {
               onChange={(e) => setUserId(e.target.value)}
               placeholder={roles.find((r) => r.id === selectedRole)!.placeholder}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+              autoComplete="off"
               required
             />
           </div>
@@ -123,6 +121,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all pr-10"
+                autoComplete="off"
                 required
               />
               <button
