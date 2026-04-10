@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   await connectDB();
   const body = await req.json();
-  const { name, email, role, departmentId, advisorId, currentSemester, isActive, password, session: userSession } = body;
+  const { name, email, role, departmentId, advisorId, currentSemester, isActive, password, session: userSession, profileImage } = body;
 
   const update: Record<string, unknown> = {};
   if (name !== undefined) update.name = name;
@@ -36,6 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (isActive !== undefined) update.isActive = isActive;
   if (password) update.password = await bcrypt.hash(password, 12);
   if (userSession !== undefined) update.session = userSession || null;
+  if (profileImage !== undefined) update.profileImage = profileImage || null;
 
   const user = await User.findByIdAndUpdate(id, { $set: update }, { new: true })
     .select("-password")

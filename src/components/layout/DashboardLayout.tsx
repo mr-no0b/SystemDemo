@@ -53,6 +53,7 @@ export function DashboardLayout({
           role={role}
           userName={session.user.name ?? "User"}
           userId={session.user.userId}
+          userImage={session.user.profileImage}
         />
         <main className="flex-1 flex flex-col overflow-hidden">
           <Header

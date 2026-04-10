@@ -7,8 +7,9 @@ import { Badge, roleVariant } from "@/components/ui/Badge";
 import { Spinner, EmptyState } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { Users, UploadSimple, DownloadSimple, Pencil, MagnifyingGlass, UserCircle, TrashSimple, Warning, CaretUp, CaretDown } from "@phosphor-icons/react";
+import { Users, UploadSimple, DownloadSimple, Pencil, MagnifyingGlass, TrashSimple, Warning, CaretUp, CaretDown } from "@phosphor-icons/react";
 import { SEMESTERS } from "@/types";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 type User = {
   _id: string;
@@ -21,6 +22,7 @@ type User = {
   advisorId?: { _id: string; name: string; userId: string } | null;
   currentSemester?: string;
   session?: string;
+  profileImage?: string;
 };
 
 type AdvisorOption = { _id: string; name: string; userId: string };
@@ -33,7 +35,7 @@ type PendingCredentialExport = {
 };
 
 // "" = not chosen yet (invalid for teachers/students), "none" = explicit no-dept (teachers only)
-const defaultForm = { name: "", email: "", userId: "", password: "", role: "student" as "student" | "teacher" | "admin", departmentId: "", advisorId: "", currentSemester: "1-1", isActive: true };
+const defaultForm = { name: "", email: "", userId: "", password: "", role: "student" as "student" | "teacher" | "admin", departmentId: "", advisorId: "", currentSemester: "1-1", isActive: true, profileImage: "" };
 const csvTemplates: Record<ImportRole, string> = {
   student: [
     "name,email",
@@ -116,7 +118,18 @@ export default function AdminUsersPage() {
     // For teachers with no dept, use 'none' sentinel so the dropdown shows the right option
     const deptValue = u.role === "teacher" && !rawDeptId ? "none" : rawDeptId;
     const rawAdvisorId = (u.advisorId as unknown as Record<string, string>)?._id ?? "";
-    setForm({ name: u.name, email: u.email, userId: u.userId, password: "", role: u.role, departmentId: deptValue, advisorId: rawAdvisorId, currentSemester: u.currentSemester ?? "1-1", isActive: u.isActive });
+    setForm({
+      name: u.name,
+      email: u.email,
+      userId: u.userId,
+      password: "",
+      role: u.role,
+      departmentId: deptValue,
+      advisorId: rawAdvisorId,
+      currentSemester: u.currentSemester ?? "1-1",
+      isActive: u.isActive,
+      profileImage: u.profileImage ?? "",
+    });
     setFormError(null);
     setShowModal(true);
   }
@@ -310,7 +323,13 @@ export default function AdminUsersPage() {
                     <tr key={u._id} className="border-b border-slate-50 hover:bg-slate-50/50">
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
-                          <UserCircle size={28} className="text-slate-300 flex-shrink-0" />
+                          <UserAvatar
+                            name={u.name}
+                            imageUrl={u.profileImage}
+                            size={32}
+                            className="w-8 h-8 flex-shrink-0"
+                            fallbackClassName="w-8 h-8 flex-shrink-0"
+                          />
                           <div>
                             <p className="text-sm font-semibold text-slate-800">{u.name}</p>
                             <p className="text-xs text-slate-400">{u.email}</p>
@@ -365,6 +384,26 @@ export default function AdminUsersPage() {
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
               <input type="email" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Profile Picture URL</label>
+              <div className="flex items-center gap-3">
+                <UserAvatar
+                  name={form.name || "User"}
+                  imageUrl={form.profileImage || undefined}
+                  size={48}
+                  className="w-12 h-12 flex-shrink-0"
+                  fallbackClassName="w-12 h-12 flex-shrink-0"
+                />
+                <input
+                  type="url"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  value={form.profileImage}
+                  onChange={(e) => setForm({ ...form, profileImage: e.target.value })}
+                  placeholder="https://example.com/profile.jpg"
+                />
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Optional. Leave blank to use the default image icon.</p>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{editing ? "New Password (leave blank to keep)" : "Password *"}</label>

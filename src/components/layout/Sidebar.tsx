@@ -27,8 +27,10 @@ import {
   Bell,
   ClipboardText,
   CalendarBlank,
+  IdentificationCard,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface NavItem {
   id: string;
@@ -111,6 +113,7 @@ const adminNav: NavGroup[] = [
       { id: "dashboard", label: "Overview", href: "/admin", icon: <SquaresFour {...iconProps} /> },
       { id: "users", label: "Users", href: "/admin/users", icon: <Users {...iconProps} /> },
       { id: "admissions", label: "Admissions", href: "/admin/admissions", icon: <Student {...iconProps} /> },
+      { id: "identity-card", label: "Identity Card", href: "/admin/identity-card", icon: <IdentificationCard {...iconProps} /> },
     ],
   },
   {
@@ -134,9 +137,10 @@ interface SidebarProps {
   role: "student" | "teacher" | "admin";
   userName: string;
   userId: string;
+  userImage?: string;
 }
 
-export default function Sidebar({ role, userName, userId }: SidebarProps) {
+export default function Sidebar({ role, userName, userId, userImage }: SidebarProps) {
   const pathname = usePathname();
 
   const navConfig =
@@ -196,11 +200,13 @@ export default function Sidebar({ role, userName, userId }: SidebarProps) {
       {/* Footer */}
       <div className="px-3 py-3 border-t border-slate-800">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] transition-colors cursor-pointer group">
-          <div className="w-9 h-9 bg-indigo-700 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-sm font-bold">
-              {userName.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <UserAvatar
+            name={userName}
+            imageUrl={userImage}
+            size={36}
+            className="w-9 h-9 flex-shrink-0"
+            fallbackClassName="bg-indigo-700 text-white flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-semibold truncate">{userName}</p>
             <p className="text-slate-500 text-xs">{userId}</p>

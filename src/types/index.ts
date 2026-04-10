@@ -7,6 +7,7 @@ declare module "next-auth" {
     role: "student" | "teacher" | "admin";
     departmentId?: string;
     currentSemester?: string;
+    profileImage?: string;
   }
   interface Session {
     user: User & {

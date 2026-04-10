@@ -60,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           departmentId: user.departmentId?.toString(),
           currentSemester: user.currentSemester,
+          profileImage: user.profileImage,
         };
       },
     }),

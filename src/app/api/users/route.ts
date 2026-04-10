@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
     }, { status: 201 });
   }
 
-  const { userId, name, email, password, role, departmentId, advisorId, currentSemester, session: userSession } = body;
+  const { userId, name, email, password, role, departmentId, advisorId, currentSemester, session: userSession, profileImage } = body;
 
   if (!userId || !name || !password || !role) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -410,6 +410,7 @@ export async function POST(req: NextRequest) {
       advisorId: advisorId || undefined,
       currentSemester: currentSemester || undefined,
       session: userSession || undefined,
+      profileImage: profileImage || undefined,
     });
     const { password: _, ...userData } = user.toObject();
     return NextResponse.json({ success: true, data: userData }, { status: 201 });

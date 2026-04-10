@@ -14,6 +14,7 @@ export const authConfig: NextAuthConfig = {
         token.role = (user as { role: string }).role;
         token.departmentId = (user as { departmentId?: string }).departmentId;
         token.currentSemester = (user as { currentSemester?: string }).currentSemester;
+        token.profileImage = (user as { profileImage?: string }).profileImage;
       }
       return token;
     },
@@ -24,6 +25,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role = token.role as "student" | "teacher" | "admin";
         session.user.departmentId = token.departmentId as string | undefined;
         session.user.currentSemester = token.currentSemester as string | undefined;
+        session.user.profileImage = token.profileImage as string | undefined;
       }
       return session;
     },
