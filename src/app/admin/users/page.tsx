@@ -7,7 +7,7 @@ import { Badge, roleVariant } from "@/components/ui/Badge";
 import { Spinner, EmptyState } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { Users, Plus, Pencil, MagnifyingGlass, UserCircle, TrashSimple, Warning } from "@phosphor-icons/react";
+import { Users, UploadSimple, DownloadSimple, Pencil, MagnifyingGlass, UserCircle, TrashSimple, Warning, CaretUp, CaretDown } from "@phosphor-icons/react";
 import { SEMESTERS } from "@/types";
 
 type User = {
@@ -23,10 +23,47 @@ type User = {
   session?: string;
 };
 
-type Dept = { _id: string; name: string; code: string; advisorIds?: { _id: string; name: string; userId: string }[] };
+type AdvisorOption = { _id: string; name: string; userId: string };
+type Dept = { _id: string; name: string; code: string; advisorIds?: AdvisorOption[] };
+type ImportRole = "student" | "teacher";
+type PendingCredentialExport = {
+  role: ImportRole;
+  csv: string;
+  count: number;
+};
 
 // "" = not chosen yet (invalid for teachers/students), "none" = explicit no-dept (teachers only)
 const defaultForm = { name: "", email: "", userId: "", password: "", role: "student" as "student" | "teacher" | "admin", departmentId: "", advisorId: "", currentSemester: "1-1", isActive: true };
+const csvTemplates: Record<ImportRole, string> = {
+  student: [
+    "name,email",
+    "Student Name,student1@example.com",
+    "Another Student,student2@example.com",
+  ].join("\n"),
+  teacher: [
+    "name,email",
+    "Teacher Name,teacher1@example.com",
+    "Another Teacher,teacher2@example.com",
+  ].join("\n"),
+};
+
+function countCsvRows(csv: string) {
+  const lines = csv
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return Math.max(0, lines.length - 1);
+}
+
+function downloadTextFile(filename: string, content: string, type = "text/plain;charset=utf-8;") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function AdminUsersPage() {
   const { toast: addToast } = useToast();
@@ -42,6 +79,16 @@ export default function AdminUsersPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importRole, setImportRole] = useState<ImportRole>("teacher");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importRowCount, setImportRowCount] = useState(0);
+  const [teacherDepartmentId, setTeacherDepartmentId] = useState("global");
+  const [studentDepartmentId, setStudentDepartmentId] = useState("");
+  const [studentAdvisorOrder, setStudentAdvisorOrder] = useState<AdvisorOption[]>([]);
+  const [pendingCredentialExport, setPendingCredentialExport] = useState<PendingCredentialExport | null>(null);
 
   const fetchUsers = useCallback(async () => {
     const params = new URLSearchParams();
@@ -58,12 +105,10 @@ export default function AdminUsersPage() {
     fetch("/api/departments").then((r) => r.json()).then((d) => setDepts(d.data ?? []));
   }, []);
 
-  function openCreate() {
-    setEditing(null);
-    setForm(defaultForm);
-    setFormError(null);
-    setShowModal(true);
-  }
+  useEffect(() => {
+    const selectedDept = depts.find((dept) => dept._id === studentDepartmentId);
+    setStudentAdvisorOrder(selectedDept?.advisorIds ?? []);
+  }, [depts, studentDepartmentId]);
 
   function openEdit(u: User) {
     setEditing(u);
@@ -74,6 +119,99 @@ export default function AdminUsersPage() {
     setForm({ name: u.name, email: u.email, userId: u.userId, password: "", role: u.role, departmentId: deptValue, advisorId: rawAdvisorId, currentSemester: u.currentSemester ?? "1-1", isActive: u.isActive });
     setFormError(null);
     setShowModal(true);
+  }
+
+  function openImport() {
+    setImportRole("teacher");
+    setImportFile(null);
+    setImportErrors([]);
+    setImportRowCount(0);
+    setTeacherDepartmentId("global");
+    setStudentDepartmentId("");
+    setStudentAdvisorOrder([]);
+    setShowImportModal(true);
+  }
+
+  function downloadTemplate() {
+    downloadTextFile(`${importRole}-users-template.csv`, csvTemplates[importRole], "text/csv;charset=utf-8;");
+  }
+
+  function downloadPendingCredentials() {
+    if (!pendingCredentialExport) return;
+    downloadTextFile(
+      `${pendingCredentialExport.role}-credentials.csv`,
+      pendingCredentialExport.csv,
+      "text/csv;charset=utf-8;"
+    );
+  }
+
+  function moveAdvisor(index: number, direction: "up" | "down") {
+    setStudentAdvisorOrder((prev) => {
+      const next = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= next.length) return prev;
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+  }
+
+  async function handleImport() {
+    if (!importFile) {
+      addToast("Please choose a CSV file first.", "warning");
+      return;
+    }
+    if (importRole === "teacher" && teacherDepartmentId === "") {
+      addToast("Please choose a department or the global option for teachers.", "warning");
+      return;
+    }
+    if (importRole === "student" && !studentDepartmentId) {
+      addToast("Please select a department for student import.", "warning");
+      return;
+    }
+    if (importRole === "student" && studentAdvisorOrder.length === 0) {
+      addToast("This department has no advisors available for distribution.", "warning");
+      return;
+    }
+
+    setImporting(true);
+    setImportErrors([]);
+
+    const csv = await importFile.text();
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "bulk_csv_auto",
+        role: importRole,
+        csv,
+        departmentId: importRole === "teacher"
+          ? (teacherDepartmentId === "global" ? null : teacherDepartmentId)
+          : studentDepartmentId,
+        advisorOrder: importRole === "student" ? studentAdvisorOrder.map((advisor) => advisor._id) : undefined,
+      }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const warningErrors = data.errors ?? [];
+      setImportErrors(warningErrors);
+      addToast(`${data.createdCount} ${importRole} user(s) imported successfully.`, "success");
+      const credentialExport: PendingCredentialExport = {
+        role: importRole,
+        csv: data.credentialsCsv ?? "",
+        count: Number(data.createdCount ?? 0),
+      };
+      setPendingCredentialExport(credentialExport);
+      fetchUsers();
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportRowCount(0);
+    } else {
+      setImportErrors(data.errors ?? []);
+      addToast(data.error || "CSV import failed", "error");
+    }
+
+    setImporting(false);
   }
 
   async function handleSave() {
@@ -148,7 +286,7 @@ export default function AdminUsersPage() {
               <button key={r} onClick={() => setRoleFilter(r)} className={`px-3.5 py-2 rounded-xl text-sm font-medium capitalize transition ${roleFilter === r ? "bg-indigo-600 text-white" : "bg-white border border-slate-200 text-slate-500 hover:bg-slate-50"}`}>{r}</button>
             ))}
           </div>
-          <Button onClick={openCreate}><Plus size={15} className="mr-1" />New User</Button>
+          <Button onClick={openImport}><UploadSimple size={15} className="mr-1" />Import CSV</Button>
         </div>
 
         <Card>
@@ -199,7 +337,7 @@ export default function AdminUsersPage() {
         </Card>
       </div>
 
-      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setFormError(null); }} title={editing ? "Edit User" : "Create User"} maxWidth="md">
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setFormError(null); }} title="Edit User" maxWidth="md">
         <div className="space-y-4">
           {formError && (
             <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl px-3 py-2.5">
@@ -300,8 +438,227 @@ export default function AdminUsersPage() {
         </div>
         <div className="flex justify-end gap-3 mt-5">
           <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
-          <Button isLoading={submitting} onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
+          <Button isLoading={submitting} onClick={handleSave}>Update</Button>
         </div>
+      </Modal>
+
+      <Modal isOpen={showImportModal} onClose={() => { setShowImportModal(false); setImportErrors([]); }} title="Import Users from CSV" maxWidth="lg">
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-800">Bulk create users by role</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Select whether you are importing teachers or students, download the sample CSV, fill it, and upload it. IDs and passwords are generated automatically.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">1. Select user role</label>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {(["teacher", "student"] as const).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => {
+                    setImportRole(role);
+                    setImportErrors([]);
+                    setImportFile(null);
+                    setImportRowCount(0);
+                  }}
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
+                    importRole === role
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:bg-indigo-50/40"
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">2. Download sample CSV</label>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <Button variant="outline" onClick={downloadTemplate}>
+                <DownloadSimple size={15} className="mr-1" />
+                Download {importRole} template
+              </Button>
+              <p className="text-xs text-slate-400">
+                Required columns for {importRole}: {csvTemplates[importRole].split("\n")[0]}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">3. Configure {importRole === "teacher" ? "teacher" : "student"} import</label>
+            {importRole === "teacher" ? (
+              <div className="space-y-2">
+                <select
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  value={teacherDepartmentId}
+                  onChange={(e) => setTeacherDepartmentId(e.target.value)}
+                >
+                  <option value="global">Global / No department</option>
+                  {depts.map((dept) => (
+                    <option key={dept._id} value={dept._id}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400">
+                  Every imported teacher will be assigned to this department, unless you choose the global option.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <select
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    value={studentDepartmentId}
+                    onChange={(e) => {
+                      setStudentDepartmentId(e.target.value);
+                      setImportErrors([]);
+                    }}
+                  >
+                    <option value="">Select department</option>
+                    {depts.map((dept) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {studentDepartmentId ? (
+                  <div className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Advisor order for distribution</p>
+                        <p className="text-xs text-slate-400">
+                          Students will be distributed evenly in this order. Rearrange advisors before importing.
+                        </p>
+                      </div>
+                    </div>
+
+                    {studentAdvisorOrder.length === 0 ? (
+                      <p className="text-sm text-rose-500">This department does not have any advisors assigned yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {studentAdvisorOrder.map((advisor, index) => {
+                          const baseShare = studentAdvisorOrder.length > 0 ? Math.floor(importRowCount / studentAdvisorOrder.length) : 0;
+                          const extra = studentAdvisorOrder.length > 0 && index < importRowCount % studentAdvisorOrder.length ? 1 : 0;
+                          return (
+                            <div key={advisor._id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                              <span className="w-6 text-center text-xs font-bold text-slate-400">{index + 1}</span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-slate-700">{advisor.name}</p>
+                                <p className="text-xs text-slate-400">{advisor.userId}</p>
+                              </div>
+                              {importFile ? (
+                                <span className="text-xs font-semibold text-indigo-600 whitespace-nowrap">{baseShare + extra} student(s)</span>
+                              ) : null}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moveAdvisor(index, "up")}
+                                  disabled={index === 0}
+                                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <CaretUp size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveAdvisor(index, "down")}
+                                  disabled={index === studentAdvisorOrder.length - 1}
+                                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <CaretDown size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">4. Upload completed CSV</label>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={async (e) => {
+                setImportErrors([]);
+                setImportFile(e.target.files?.[0] ?? null);
+                const file = e.target.files?.[0];
+                if (!file) {
+                  setImportRowCount(0);
+                  return;
+                }
+                setImportRowCount(countCsvRows(await file.text()));
+              }}
+              className="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+            {importFile ? (
+              <p className="text-xs text-slate-500 mt-2">Selected file: {importFile.name} · {importRowCount} row(s) detected</p>
+            ) : null}
+          </div>
+
+          {importErrors.length > 0 ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-800">Import notes</p>
+              <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                {importErrors.map((error, index) => (
+                  <p key={`${error}-${index}`} className="text-sm text-amber-700">{error}</p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <div className="flex justify-end gap-3 mt-5">
+          <Button variant="ghost" onClick={() => setShowImportModal(false)}>Cancel</Button>
+          <Button isLoading={importing} onClick={handleImport}>
+            <UploadSimple size={15} className="mr-1" />
+            Import Users
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(pendingCredentialExport)}
+        onClose={() => setPendingCredentialExport(null)}
+        title="Download Credentials"
+        maxWidth="md"
+      >
+        {pendingCredentialExport ? (
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-900">Download before closing</p>
+              <p className="text-sm text-amber-800 mt-1">
+                This file is available only in this window. After you close it, there will be no other download option.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-800 capitalize">{pendingCredentialExport.role} credentials ready</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {pendingCredentialExport.count} account{pendingCredentialExport.count === 1 ? "" : "s"} created successfully.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setPendingCredentialExport(null)}>Close</Button>
+              <Button onClick={downloadPendingCredentials}>
+                <DownloadSimple size={15} className="mr-1" />
+                Download Credentials
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Modal>
 
       {/* Delete Confirmation Modal */}

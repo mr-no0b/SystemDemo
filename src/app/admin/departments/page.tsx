@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import {
   Buildings, Plus, Pencil, BookOpen, CaretRight, CaretDown,
-  FolderOpen, Folder, UserCircle, ChalkboardTeacher, X, Trash,
+  FolderOpen, Folder, UserCircle, ChalkboardTeacher, Trash,
 } from "@phosphor-icons/react";
 import { SEMESTERS } from "@/types";
 
@@ -38,11 +38,6 @@ export default function AdminDepartmentsPage() {
   const [headDept, setHeadDept] = useState<Dept | null>(null);
   const [selectedHead, setSelectedHead] = useState("");
   const [savingHead, setSavingHead] = useState(false);
-
-  const [showAdvisorModal, setShowAdvisorModal] = useState(false);
-  const [advisorDept, setAdvisorDept] = useState<Dept | null>(null);
-  const [selectedAdvisor, setSelectedAdvisor] = useState("");
-  const [savingAdvisor, setSavingAdvisor] = useState(false);
 
   const [expandedDeptId, setExpandedDeptId] = useState<string | null>(null);
   const [openSemesters, setOpenSemesters] = useState<Set<string>>(new Set());
@@ -145,23 +140,6 @@ export default function AdminDepartmentsPage() {
     setSavingHead(false);
   }
 
-  async function handleAddAdvisor() {
-    if (!advisorDept || !selectedAdvisor) return addToast("Select a teacher", "error");
-    setSavingAdvisor(true);
-    const res = await fetch(`/api/departments/${advisorDept._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add_advisor", teacherId: selectedAdvisor }) });
-    const d = await res.json();
-    if (d.success) { addToast("Advisor added!", "success"); setShowAdvisorModal(false); fetchDepts(); }
-    else addToast(d.error || "Failed", "error");
-    setSavingAdvisor(false);
-  }
-
-  async function handleRemoveAdvisor(deptId: string, teacherId: string) {
-    const res = await fetch(`/api/departments/${deptId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove_advisor", teacherId }) });
-    const d = await res.json();
-    if (d.success) { addToast("Advisor removed", "success"); fetchDepts(); }
-    else addToast(d.error || "Failed", "error");
-  }
-
   return (
     <DashboardLayout role="admin" title="Departments" breadcrumb="Home / Departments">
       <div className="max-w-3xl mx-auto space-y-4">
@@ -212,12 +190,8 @@ export default function AdminDepartmentsPage() {
                             : dept.advisorIds.map((a) => (
                               <span key={a._id} className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs font-semibold px-2 py-0.5 rounded-full">
                                 {a.name}
-                                <button onClick={() => handleRemoveAdvisor(dept._id, a._id)} className="hover:text-rose-500 transition"><X size={10} weight="bold" /></button>
                               </span>
                             ))}
-                          <button onClick={() => { setAdvisorDept(dept); setSelectedAdvisor(""); setShowAdvisorModal(true); }} className="inline-flex items-center gap-0.5 text-xs text-purple-500 hover:text-purple-700 font-medium border border-purple-200 hover:border-purple-400 px-1.5 py-0.5 rounded-full transition">
-                            <Plus size={10} weight="bold" />Add
-                          </button>
                         </div>
                       </div>
 
@@ -321,7 +295,7 @@ export default function AdminDepartmentsPage() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Code *</label>
             <input className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-300" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="CSE" />
           </div>
-          <p className="text-xs text-slate-400">Head and advisors can be assigned from the department card after creating.</p>
+          <p className="text-xs text-slate-400">Department advisors are assigned automatically from active teachers belonging to the department.</p>
         </div>
         <div className="flex justify-end gap-3 mt-5">
           <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
@@ -344,27 +318,6 @@ export default function AdminDepartmentsPage() {
         <div className="flex justify-end gap-3 mt-5">
           <Button variant="ghost" onClick={() => setShowHeadModal(false)}>Cancel</Button>
           <Button isLoading={savingHead} onClick={handleSetHead}>Save</Button>
-        </div>
-      </Modal>
-
-      {/* Add Advisor Modal */}
-      <Modal isOpen={showAdvisorModal} onClose={() => setShowAdvisorModal(false)} title={`Add Advisor — ${advisorDept?.name}`} maxWidth="sm">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Select Teacher</label>
-          <select className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" value={selectedAdvisor} onChange={(e) => setSelectedAdvisor(e.target.value)}>
-            <option value="">— choose —</option>
-            {teachers
-              .filter((t) => !t.departmentId || t.departmentId._id === advisorDept?._id)
-              .filter((t) => !advisorDept?.advisorIds.some((a) => a._id === t._id))
-              .map((t) => (
-              <option key={t._id} value={t._id}>{t.name} ({t.userId})</option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-400 mt-2">A department can have multiple advisors. Showing teachers from this department and those with no specific department. Already-assigned teachers are hidden.</p>
-        </div>
-        <div className="flex justify-end gap-3 mt-5">
-          <Button variant="ghost" onClick={() => setShowAdvisorModal(false)}>Cancel</Button>
-          <Button isLoading={savingAdvisor} onClick={handleAddAdvisor}>Add Advisor</Button>
         </div>
       </Modal>
     </DashboardLayout>
