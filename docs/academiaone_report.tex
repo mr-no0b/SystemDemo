@@ -1,0 +1,1099 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[a4paper,left=1.2in,right=1.2in,top=1in,bottom=1in]{geometry}
+\usepackage{times}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+
+\onehalfspacing
+\setlength{\parindent}{0.5in}
+\setlength{\parskip}{0pt}
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
+\renewcommand{\chaptername}{CHAPTER}
+\renewcommand{\thechapter}{\Roman{chapter}}
+\captionsetup{font=small,labelfont=bf}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\filepath}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\systemName}{AcademiaOne}
+\newcommand{\reportTitle}{\systemName: An Integrated University Management Platform}
+
+% Replace the following placeholders before final academic submission.
+\newcommand{\courseTitle}{Project / Thesis / Sessional}
+\newcommand{\submissionDate}{April 2026}
+\newcommand{\departmentName}{Department of Computer Science and Engineering}
+\newcommand{\universityName}{Khulna University of Engineering \& Technology}
+\newcommand{\authorOne}{Student Name 1}
+\newcommand{\authorOneRoll}{Roll No. XXXXX}
+\newcommand{\authorTwo}{Student Name 2}
+\newcommand{\authorTwoRoll}{Roll No. XXXXX}
+\newcommand{\authorThree}{Student Name 3}
+\newcommand{\authorThreeRoll}{Roll No. XXXXX}
+\newcommand{\authorFour}{Student Name 4}
+\newcommand{\authorFourRoll}{Roll No. XXXXX}
+\newcommand{\supervisorName}{Supervisor Name}
+\newcommand{\supervisorDesignation}{Professor / Associate Professor / Lecturer}
+
+\newcommand{\CoverLogo}{
+  \fbox{
+    \parbox[c][1.55in][c]{1.55in}{
+      \centering
+      KUET\\
+      LOGO
+    }
+  }
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \begin{center}
+    \vspace*{0.5in}
+    {\Large \textbf{\reportTitle}\par}
+    \vspace{0.8in}
+    {\large By\par}
+    \vspace{0.4in}
+
+    {\large \authorOne\par}
+    {\large \authorOneRoll\par}
+    \vspace{0.15in}
+    {\large \authorTwo\par}
+    {\large \authorTwoRoll\par}
+    \vspace{0.15in}
+    {\large \authorThree\par}
+    {\large \authorThreeRoll\par}
+    \vspace{0.15in}
+    {\large \authorFour\par}
+    {\large \authorFourRoll\par}
+
+    \vfill
+    \CoverLogo
+    \vfill
+
+    {\large \departmentName\par}
+    {\large \universityName\par}
+    \vspace{0.25in}
+    {\large \submissionDate\par}
+    \vspace{0.25in}
+    {\large \courseTitle\par}
+  \end{center}
+\end{titlepage}
+
+\clearpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\begin{titlepage}
+  \begin{center}
+    {\Large \textbf{\reportTitle}\par}
+    \vspace{0.6in}
+    {\large By\par}
+    \vspace{0.25in}
+
+    {\large \authorOne, \authorOneRoll\par}
+    {\large \authorTwo, \authorTwoRoll\par}
+    {\large \authorThree, \authorThreeRoll\par}
+    {\large \authorFour, \authorFourRoll\par}
+
+    \vspace{0.7in}
+    {\large Supervised by\par}
+    \vspace{0.2in}
+    {\large \supervisorName\par}
+    {\large \supervisorDesignation\par}
+    {\large \departmentName\par}
+    {\large \universityName\par}
+
+    \vfill
+
+    \begin{tabular}{p{2.3in}p{2.3in}}
+      \centering Candidate Signature & \centering Supervisor Signature \tabularnewline
+      \centering \rule{2.0in}{0.4pt} & \centering \rule{2.0in}{0.4pt} \tabularnewline
+    \end{tabular}
+
+    \vfill
+    {\large \submissionDate\par}
+  \end{center}
+\end{titlepage}
+
+\chapter*{Acknowledgment}
+\addcontentsline{toc}{chapter}{Acknowledgment}
+This report was prepared from a full source-level analysis of the \systemName{} repository and the formatting guidance supplied in \filepath{report_format.pdf}. The project reflects a large amount of engineering effort across academic management, classroom interaction, communication, identity, and workflow automation. The authors sincerely acknowledge the support, guidance, and constructive feedback of \supervisorName{}, whose mentorship shapes both the technical depth and the presentation quality of this work.
+
+The development of \systemName{} also benefits from the broader ecosystem of open-source tools and frameworks that make modern web-based academic systems feasible. The report therefore recognizes the value of Next.js, React, TypeScript, Tailwind CSS, MongoDB, Mongoose, NextAuth, Nodemailer, and pdf-lib, all of which contribute to the final system architecture. Gratitude is also due to peers, testers, and well-wishers whose observations on usability, academic workflow, and institutional needs helped refine the system into a more coherent and practical platform.
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\systemName{} is a full-stack university management platform designed to bring fragmented academic processes into a single web application. The project combines student, teacher, and administrator workflows under a role-based architecture built with Next.js, React, TypeScript, Tailwind CSS, MongoDB, Mongoose, and NextAuth. The system supports semester registration, advisor and head approval, a dummy payment confirmation step, classroom management, assignments, attendance, results, notices, elections, notes, books, notifications, forum moderation, duplicate solved-question detection, and administrative identity-card generation.
+
+The main problem addressed by the project is the operational fragmentation commonly seen in academic institutions, where registration, classroom communication, attendance, result publication, and co-curricular activities are often handled through separate tools or manual processes. Such fragmentation increases repetitive data entry, delays approvals, weakens traceability, and creates poor user experience for students and faculty members. \systemName{} addresses this challenge through a unified data model and a modular workflow-oriented design in which each role sees only the interfaces and actions relevant to its responsibilities.
+
+From an implementation perspective, the project uses App Router based pages for user interfaces and server-side route handlers for business logic. MongoDB models represent users, departments, sessions, courses, sections, registrations, enrollments, assignments, submissions, attendance records, results, notices, elections, forum entities, and notifications. The forum module introduces an additional intelligent feature by storing sparse text vectors and comparing new questions against previously solved ones using cosine similarity and overlap-based scoring, thereby reducing duplicate academic queries.
+
+This report documents the system in the structure required by the supplied report format. It presents the background, objectives, methodology, architecture, implementation details, validation-oriented results, broader ethical and societal considerations, and the complex engineering aspects involved in building the platform. The report concludes that \systemName{} is not merely a set of isolated pages, but an integrated academic operations platform with strong potential for institutional use and future extension.
+
+\tableofcontents
+\clearpage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\clearpage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\chapter{Introduction}
+
+\section{Introduction}
+Universities depend on a dense network of recurring academic activities: user onboarding, course planning, semester registration, classroom communication, attendance collection, assignment submission, mark entry, result publication, co-curricular elections, and official announcements. In many institutions these activities are still distributed across separate tools, spreadsheets, messaging groups, paper-based forms, and manual approval chains. The resulting process is not only inconvenient but also structurally fragile. Important information becomes duplicated, policy enforcement becomes inconsistent, and both students and teachers spend time tracking procedural state instead of focusing on education.
+
+\systemName{} was conceived to address this fragmentation by treating academic administration and academic interaction as parts of one connected system. Instead of building a registration portal, a classroom portal, and a discussion forum as unrelated software artifacts, the project unifies them under a common identity model, a common database, and a role-aware navigation structure. This approach matters because university operations are highly interdependent. A student who is admitted after registration should immediately see the correct classroom offerings; a teacher assigned to a section should be able to take attendance, manage assignments, and submit marks using the same course context; and an administrator should be able to oversee the policy windows that govern the rest of the system.
+
+The repository analysis shows that \systemName{} is not a prototype limited to a single use case. It contains public pages, role-specific dashboards, 43 API route files, 24 persistent data models, notification and email utilities, document generation logic, and workflow checks that encode institutional rules. These characteristics make it suitable as a substantial academic project in software engineering, web engineering, or information systems.
+
+\section{Background and Problem Statement}
+The background of this work lies in the day-to-day difficulties of running academic processes at departmental or institutional level. Student registration is often multi-stage and policy-driven: learners submit course selections, advisors verify academic feasibility, department heads approve the plan, and financial clearance or payment confirmation finalizes admission. When this flow is carried out manually, each state transition requires repeated messaging, document exchange, or spreadsheet editing. The absence of a centralized system also makes it difficult to determine why a student is delayed, who last acted on an application, and whether a course enrollment truly matches the final approval.
+
+Teaching activities introduce a second layer of complexity. Course materials, announcements, attendance sessions, assignment distribution, submission tracking, and grading are closely linked, yet many campuses rely on a patchwork of messaging applications, cloud folders, and stand-alone classroom tools. Students then experience a fragmented academic life in which notices are separated from classrooms, attendance records are separated from results, and support discussions are separated from the formal course context. Faculty members likewise experience repetitive work because the same roster, course code, or session information must be entered into multiple places.
+
+Administrative operations create additional pressure. Departments need controlled creation of users, academic sessions, courses, sections, registration windows, and result publication windows. They may also require special utilities such as student identity-card generation, role-aware notice distribution, and student election management. Without a unified platform, policy enforcement becomes dependent on human memory rather than system constraints. For example, result publication may occur before all marks are aggregated, or duplicate forum questions may bury already solved academic problems.
+
+The problem statement can therefore be summarized as follows: existing academic workflows are operationally fragmented, weakly traceable, and labor-intensive, leading to inefficiency, inconsistency, and poor user experience. A modern institution needs an integrated software solution that combines administrative governance with student and teacher interactions while preserving role boundaries and data consistency. \systemName{} addresses that need by implementing a unified university management platform with workflow automation and cross-module integration.
+
+\section{Objectives}
+The primary objective of the project is to design and implement an integrated university management system that supports the major academic workflows of students, teachers, and administrators in one web application.
+
+The specific objectives of the project are listed below.
+\begin{enumerate}
+  \item To provide secure credentials-based authentication with strict role separation for students, teachers, and administrators.
+  \item To automate semester registration through advisor approval, head approval, and payment-confirmation stages.
+  \item To manage academic structure through departments, sessions, courses, and sections.
+  \item To support classroom operations including announcements, assignments, student lists, submissions, and course materials.
+  \item To digitize attendance through both live code-based sessions and manual record entry.
+  \item To support result entry, window-controlled publishing, GPA/CGPA calculation, and semester lifecycle cleanup.
+  \item To enable institutional communication through notices, notifications, and email broadcasting.
+  \item To incorporate student participation modules such as elections, notes, books, and a moderated academic forum.
+  \item To reduce duplicate forum questions using source-level text analysis and similarity-based blocking.
+  \item To provide administrative utilities such as bulk user import and identity-card PDF generation.
+\end{enumerate}
+
+\section{Scope}
+The scope of \systemName{} is broad enough to represent a realistic institutional platform while still remaining manageable as a modular academic software project. The system is implemented as a web application and therefore serves students, teachers, and administrators through standard browsers without requiring platform-specific installation. The repository indicates that the application is organized around the Next.js App Router, React-based interfaces, TypeScript data structures, Tailwind-driven styling, and MongoDB-backed persistence.
+
+The project covers operational scope in six major areas: identity and access control, academic structure management, registration and admission, teaching and classroom support, academic record management, and communication/community features. Identity and access control ensure that only authorized users can access pages and actions appropriate to their roles. Academic structure management includes departments, sessions, courses, and assignments. Registration and admission cover windows, approvals, payments, and enrollments. Teaching and classroom support include assignments, submissions, announcements, notes, books, and attendance. Academic record management includes mark entry, results, publication, GPA/CGPA, and ranking. Communication and community features include notices, notifications, elections, and the forum.
+
+The project also adopts a modern implementation scope. Instead of relying on server-rendered templates alone, it combines server-side checks with client-side interactivity. Instead of a flat schema, it uses separate Mongoose models for each academic entity. Instead of a single-purpose utility layer, it includes email dispatching, notification creation, vector generation, and PDF output. This makes the system a meaningful example of modern web engineering rather than a static academic portal.
+
+\begin{table}[H]
+  \centering
+  \caption{Technology stack used in \systemName{}}
+  \label{tab:tech-stack}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.5in}p{1.8in}Y}
+    \toprule
+    \textbf{Layer} & \textbf{Technology} & \textbf{Role in the system} \\
+    \midrule
+    Frontend framework & Next.js 16 and React 19 & Page routing, server and client rendering, dashboard interfaces, public pages, and role-specific views \\
+    Programming language & TypeScript 5 & Type safety across pages, APIs, and shared data structures \\
+    Styling & Tailwind CSS 4 & Utility-first styling for dashboards, forms, tables, and responsive layout \\
+    Database & MongoDB Atlas & Persistent storage for academic, identity, communication, and forum data \\
+    ODM & Mongoose & Schema definition, model registration, validation, and query abstraction \\
+    Authentication & NextAuth v5 beta & Credentials-based login, JWT session strategy, and role propagation \\
+    Security utility & bcryptjs & Password hash verification during login \\
+    Messaging & Nodemailer & Email distribution for registration, notices, elections, and results \\
+    Document generation & pdf-lib & Student identity-card PDF generation \\
+    Custom logic & Forum similarity utility & Sparse vector generation and duplicate solved-question detection \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Unfamiliarity of the Problem, Topic, and Solution}
+Although a university management platform may appear straightforward at first glance, the underlying engineering problem is unfamiliar in several important ways. First, the domain is rule-heavy. Registration is not a simple form submission; it depends on open windows, previous result publication, advisor assignment, head approval, fee confirmation, and enrollment creation. Result publication is not a simple upload; it depends on mark-entry windows, percentage conversion, merged duplicate course codes, GPA and CGPA calculation, ranking, and end-of-semester cleanup. These constraints make the project more complex than a conventional CRUD application.
+
+Second, the topic forces the software to serve users with strongly different goals. Students need clarity and guided workflows. Teachers need efficient control over course-specific actions. Administrators need global visibility and governance. A design that works for one of these groups can become confusing or insecure for the others. The repository addresses this by combining middleware checks, session-aware route protection, role-specific dashboards, and domain-specific page structures.
+
+Third, the solution itself includes non-trivial features that go beyond common academic portals. The forum module stores normalized sparse vectors for questions and attempts to block duplicates when a similar solved question already exists. The identity-card module generates PDF output rather than merely displaying records. The election module encodes eligibility and lifecycle rules rather than acting as an unmoderated poll. These choices show that the project had to bridge standard information-system design with elements of text processing, document generation, and policy-driven automation.
+
+\section{Project Planning and Work Distribution}
+The project is best understood as an incremental, module-first implementation effort. A practical plan for a system of this size begins with foundational concerns such as authentication, database connectivity, and layout scaffolding. Once those are stable, the academic backbone can be introduced through sessions, departments, courses, and sections. Workflow modules such as registration, classroom management, attendance, and results can then be layered on top. Finally, communication and auxiliary modules such as notices, elections, forum moderation, and identity cards can be added without disturbing the core data model.
+
+The repository structure supports the interpretation that development proceeded in feature-oriented slices rather than as one monolithic implementation. Models and route handlers are separated cleanly, and role-specific pages group operational responsibilities in intuitive locations. This is a reasonable strategy for student teams because each module can be implemented and validated with bounded responsibility while still connecting to the larger platform.
+
+\begin{table}[H]
+  \centering
+  \caption{Suggested milestone-based project plan}
+  \label{tab:milestone-plan}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.0in}p{2.2in}Y}
+    \toprule
+    \textbf{Phase} & \textbf{Main focus} & \textbf{Expected output} \\
+    \midrule
+    Phase 1 & Requirement analysis and system scoping & Role definitions, module list, institutional workflow assumptions, and report outline \\
+    Phase 2 & Core architecture and authentication & Database bootstrap, user model, login flow, middleware, dashboard shell, and route protection \\
+    Phase 3 & Academic structure management & Departments, sessions, courses, sections, teacher assignment, and administrative data management \\
+    Phase 4 & Registration and admissions & Registration windows, application workflow, approvals, payment confirmation, and enrollment generation \\
+    Phase 5 & Classroom and attendance & Course classrooms, announcements, assignments, submissions, live attendance, and manual attendance records \\
+    Phase 6 & Results and notifications & Result windows, mark entry, publishing pipeline, ranking, notifications, and email dispatch \\
+    Phase 7 & Community and advanced utilities & Elections, notes, books, forum moderation, duplicate detection, and identity-card PDF generation \\
+    Phase 8 & Refinement and documentation & UI cleanup, policy checks, README updates, report writing, and final submission artifacts \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Illustrative work-distribution matrix}
+  \label{tab:work-distribution}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.3in}Y}
+    \toprule
+    \textbf{Contributor} & \textbf{Indicative responsibility} \\
+    \midrule
+    Member A & Authentication, dashboard layout, middleware, and role-aware navigation \\
+    Member B & Registration, enrollment, admissions, and result-processing workflow \\
+    Member C & Classroom, attendance, assignments, submissions, notes, and books \\
+    Member D & Notices, elections, forum moderation, duplicate detection, and identity-card generation \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+If the project is completed by a single author, the same name may be repeated across the responsibility rows while still preserving the planning logic. The table is included because the supplied format explicitly calls for project planning and work distribution.
+
+\section{Applications}
+The immediate application of \systemName{} is academic operations within a department or institution. Students can use the platform to register for semesters, track attendance, inspect results, access course materials, participate in elections, and obtain notices in a structured environment. Teachers can use the same platform to supervise advisees, control classrooms, take attendance, manage assignments, publish marks, recommend books, and moderate community interactions. Administrators can maintain users, departments, sessions, courses, windows, and notices from one control surface.
+
+The system also has broader application value as a reference architecture for multi-role workflow software. Many organizations outside education face similar problems of staged approvals, role-bound permissions, data traceability, communication fan-out, and document generation. Therefore, concepts demonstrated by \systemName{} such as approval pipelines, route-level authorization, notification broadcasting, and lifecycle-based cleanup can inform systems in training institutes, professional development centers, or internal organizational portals.
+
+\section{Organization of the Project}
+The remainder of this report is organized according to the supplied report format. Chapter II reviews related systems and the design gap that motivates an integrated platform. Chapter III presents the methodology, architecture, workflow design, and problem analysis. Chapter IV explains the implementation in detail and summarizes both qualitative and quantitative results derived from source analysis. Chapter V discusses intellectual property, ethical, legal, societal, health, safety, and environmental considerations. Chapter VI analyzes the project in terms of complex engineering problems and activities. Chapter VII concludes the report with a summary, limitations, and future recommendations. Appendices then provide detailed inventories of routes, models, and project structure.
+
+\chapter{Related Works}
+
+\section{Introduction}
+Academic software is not a new domain. Institutions have long used digital tools for student information, classroom delivery, examination processing, and communication. However, these tools are often developed or adopted in silos. A student information system may handle registration and grades but offer poor classroom interaction. A learning management system may provide assignments and announcements but not departmental approval workflows. Messaging tools may improve communication but weaken archival traceability. For this reason, understanding related works is less about identifying one direct predecessor and more about examining adjacent categories of academic software.
+
+\section{Discussion}
+One major category of related work is the student information system. These systems usually focus on admissions, student records, semester registration, transcripts, and administrative reporting. Their strengths include policy control and record persistence. Their weaknesses often appear in daily instructional interaction. Classroom announcements, assignment exchanges, or live attendance are frequently outside their main design priority.
+
+Another related category is the learning management system, represented by platforms such as Moodle, Canvas, and Google Classroom. These environments emphasize course delivery, digital content sharing, assignment handling, and communication between teachers and students. They excel in the classroom context but may not be sufficient for department-level approval chains such as advisor-reviewed registration, academic-session management, result-window governance, or institutional identity-card generation.
+
+A third category is university communication infrastructure, including email lists, notice boards, and ad hoc messaging channels. These tools are easy to start with but poor at preserving structured context. An announcement posted in a group chat is difficult to associate with a course offering, a department, or a specific academic session.
+
+A fourth category involves specialized tools such as online voting systems, digital library recommendation portals, or question-answer forums. Such systems solve focused problems well but often fail to connect with the rest of campus operations. \systemName{} positions itself at the intersection of these categories by integrating administrative governance, classroom support, communication, participation, and knowledge sharing inside one academic context.
+
+\begin{table}[H]
+  \centering
+  \caption{High-level comparison between related academic software categories and \systemName{}}
+  \label{tab:related-work-comparison}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{2.1in}p{0.9in}p{0.9in}p{0.9in}Y}
+    \toprule
+    \textbf{Capability} & \textbf{Student information systems} & \textbf{LMS tools} & \textbf{Single-purpose utilities} & \textbf{\systemName{}} \\
+    \midrule
+    User and role management & Strong & Partial & Weak & Strong \\
+    Semester registration workflow & Strong & Weak & Weak & Strong \\
+    Advisor and head approval logic & Strong & Weak & Weak & Strong \\
+    Classroom announcements and assignments & Weak & Strong & Partial & Strong \\
+    Attendance workflow integrated with course context & Partial & Partial & Partial & Strong \\
+    Result window control and GPA processing & Strong & Weak & Weak & Strong \\
+    Notes, books, and forum support & Weak & Partial & Strong only in isolation & Strong \\
+    Election management with eligibility rules & Weak & Weak & Partial & Strong \\
+    Centralized academic identity and session context & Strong & Partial & Weak & Strong \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The repository suggests that \systemName{} addresses the integration challenge through a modular but shared architecture. The models are separate, the routes are separated by domain, and the pages are organized by role, yet the same identity and academic structure are reused everywhere. This makes the project a strong example of integrated academic workflow software rather than a loose collection of unrelated features.
+
+\chapter{Methodology}
+
+\section{Introduction}
+The methodology of \systemName{} combines domain analysis, modular full-stack implementation, and workflow-oriented validation. Because the project spans several academic processes, the goal was not simply to store data but to encode institutional rules in software. This required a methodology that could move from requirements to schemas, from schemas to routes, and from routes to role-specific interfaces while maintaining coherence across modules.
+
+\section{Detailed Methodology}
+The development approach is best described as iterative and module-driven. Requirements were first grouped by role: students require visibility and guided action, teachers require course-bound control, and administrators require policy and data governance. After this separation, cross-cutting concerns such as authentication, database access, and route protection were built so that later features could depend on stable foundations.
+
+The repository reflects a layered methodology. Pages present the interface, route handlers implement workflows, models represent institutional entities, and libraries provide shared services such as authentication, notifications, email distribution, similarity encoding, and database bootstrap. This layering improves maintainability because academic rules are not buried inside UI components alone.
+
+\begin{table}[H]
+  \centering
+  \caption{Architectural layers of \systemName{}}
+  \label{tab:architecture-layers}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.4in}Y}
+    \toprule
+    \textbf{Layer} & \textbf{Main responsibility} \\
+    \midrule
+    Presentation layer & Login page, dashboards, student pages, teacher pages, admin pages, and public forum interfaces \\
+    Application layer & Next.js API routes, request validation, workflow transitions, and JSON responses \\
+    Domain layer & Authentication callbacks, notification helpers, email templates, vector similarity logic, and workflow decisions \\
+    Data layer & MongoDB collections and Mongoose schemas for academic, identity, communication, and forum entities \\
+    Infrastructure layer & Environment configuration, deployment runtime, PDF generation, mail transport, and database connection management \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.88\textwidth}{
+      \centering
+      \textbf{Client Interfaces}\\
+      Student dashboard, Teacher dashboard, Admin dashboard, Public forum\\[0.2in]
+      $\downarrow$\\[0.15in]
+      \textbf{Next.js Pages and API Routes}\\
+      App Router pages, session checks, route handlers, redirect logic\\[0.2in]
+      $\downarrow$\\[0.15in]
+      \textbf{Shared Domain Services}\\
+      Auth, notifications, email templates, similarity engine, PDF generator\\[0.2in]
+      $\downarrow$\\[0.15in]
+      \textbf{Mongoose Models and MongoDB}\\
+      Users, registrations, results, attendance, notices, elections, and forum entities
+    }
+  }
+  \caption{Overall architectural framework of \systemName{}}
+  \label{fig:overall-architecture}
+\end{figure}
+
+The methodology also incorporates explicit policy windows. Registration windows and result windows are modeled as separate entities, which allows the system to check whether a workflow is open before performing an action. This is an important design decision because academic operations are time-bound. By lifting windows into data models rather than hard-coded dates, the system becomes easier to administer and audit.
+
+\section{Problem Design and Analysis}
+The main design problem was how to coordinate multiple institutional workflows without creating duplicated data or contradictory state. The project solves this by using shared identifiers and staged transitions. A registration record links students, advisors, heads, sessions, courses, and approval status. When a student completes the payment step, the route logic both updates the registration state and creates the corresponding enrollment records. This means enrollment is not an independent manual process; it is derived from successful registration completion.
+
+Another important design issue is model separation. The project does not overload one collection with every academic concern. Users, departments, courses, sections, sessions, registrations, enrollments, assignments, submissions, attendance sessions, attendance records, results, notices, notifications, forum posts, forum answers, elections, candidates, votes, notes, books, and mark entries all receive distinct models. This is a sound approach because each entity has a different lifecycle and different constraints.
+
+The application also had to prevent role leakage. A student must not be able to access teacher or admin pages simply by typing a URL, and a teacher should not be able to modify administrative data unrelated to their responsibility. The repository handles this at both the session layer and the route layer. Middleware redirects unauthorized users, while APIs still verify role and context before mutating data. This two-level protection is especially important in multi-role systems because UI-only hiding is not sufficient security.
+
+The forum module introduces a different kind of design problem: reducing repetitive academic questions without suppressing genuine discussion. The chosen approach is lexical similarity rather than opaque AI classification. New forum questions are normalized, tokenized, converted into sparse vectors, and compared against solved questions using cosine similarity and overlap-based scoring. If the match is close enough, the new question is blocked and the user is shown existing solved content. This design improves knowledge reuse while remaining explainable and computationally manageable.
+
+\begin{equation}
+\text{Cosine Similarity}(A, B) =
+\frac{\sum_{i=1}^{n} A_i B_i}
+{\sqrt{\sum_{i=1}^{n} A_i^2}\sqrt{\sum_{i=1}^{n} B_i^2}}
+\end{equation}
+
+\begin{equation}
+\text{Jaccard Overlap}(X, Y) =
+\frac{|X \cap Y|}{|X \cup Y|}
+\end{equation}
+
+The source analysis indicates that the duplicate-question check uses stored vectors and a threshold-based decision rule. The exact weight combination can evolve, but the methodological point remains the same: the system formalizes forum moderation as a reproducible comparison process instead of an ad hoc manual guess.
+
+\section{Overall Framework and Workflow Design}
+Because the project is workflow-centric, visualizing the major flows is important. The following figures summarize the core operational pipelines extracted from the repository.
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.9\textwidth}{
+      \centering
+      Student selects semester and courses\\[0.1in]
+      $\downarrow$\\[0.1in]
+      System checks open registration window and previous-result eligibility\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Registration created with \texttt{pending\_advisor} status\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Advisor approves or rejects\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Head approves or rejects\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Student completes dummy payment step\\[0.1in]
+      $\downarrow$\\[0.1in]
+      System admits student, generates enrollments, updates semester, sends notice and email
+    }
+  }
+  \caption{Registration and admission workflow}
+  \label{fig:registration-workflow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.9\textwidth}{
+      \centering
+      Teacher selects assigned section\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Teacher creates live attendance session with a short code\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Student submits code from attendance page\\[0.1in]
+      $\downarrow$\\[0.1in]
+      System validates session status, section relation, and duplicate marking\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Teacher closes session\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Records are persisted as attendance history for later summary and drill-down
+    }
+  }
+  \caption{Attendance workflow}
+  \label{fig:attendance-workflow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.9\textwidth}{
+      \centering
+      Admin opens result window for semester and session\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Teachers submit mark entries for eligible courses\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Admin closes and publishes window\\[0.1in]
+      $\downarrow$\\[0.1in]
+      System aggregates marks, converts percentages, merges duplicate course codes\\[0.1in]
+      $\downarrow$\\[0.1in]
+      GPA, CGPA, and department rank are computed\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Results are published, notifications are sent, semester cleanup is performed
+    }
+  }
+  \caption{Result publication workflow}
+  \label{fig:result-workflow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.9\textwidth}{
+      \centering
+      Student enters forum title and question body\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Text is normalized, tokenized, and converted into sparse vectors\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Stored solved posts are compared by similarity and token overlap\\[0.1in]
+      $\downarrow$\\[0.1in]
+      If a close solved match exists, posting is blocked and alternatives are shown\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Otherwise the question is saved with vector metadata for future comparison
+    }
+  }
+  \caption{Forum duplicate solved-question detection workflow}
+  \label{fig:forum-workflow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \parbox{0.9\textwidth}{
+      \centering
+      Department head creates election for a role and target semester or year\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Eligible students apply as candidates\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Head approves or rejects applications\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Election enters voting state\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Eligible students cast one vote each\\[0.1in]
+      $\downarrow$\\[0.1in]
+      Election completes and top vote-getter becomes winner or position remains vacant
+    }
+  }
+  \caption{Election lifecycle workflow}
+  \label{fig:election-workflow}
+\end{figure}
+
+These workflows show why a unified architecture matters. The same identity model participates in classroom, registration, results, elections, and communication. The department model influences teachers, students, notices, and election eligibility. The course and section structures influence classroom lists, attendance, assignments, and mark entry. This interdependence is exactly what the methodology needed to manage.
+
+\section{Data-Centric Method}
+The data model of \systemName{} is central to its correctness. Rather than treating database design as a secondary implementation detail, the project uses persistent entities to represent real academic objects and their state transitions. The repository contains 24 models, which is a substantial number for a student project and signals that the design intentionally decomposes the domain.
+
+\begin{table}[H]
+  \centering
+  \caption{Core data domains represented in the system}
+  \label{tab:data-domains}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.7in}Y}
+    \toprule
+    \textbf{Data domain} & \textbf{Representative models} \\
+    \midrule
+    Identity and governance & User, Department, Session, Notification \\
+    Academic structure & Course, CourseSection, Enrollment \\
+    Registration and admission & RegistrationWindow, Registration \\
+    Classroom and learning support & Assignment, Submission, Note, BookRecommendation \\
+    Attendance & AttendanceSession, AttendanceRecord \\
+    Assessment and results & MarkEntry, ResultWindow, Result \\
+    Communication & Notice, Notification \\
+    Community and participation & Election, ElectionCandidate, ElectionVote, ForumPost, ForumAnswer \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+This data-centric method improves traceability. When a question arises about who approved a registration, which students were enrolled, whether a result window was open, or which candidate won an election, the answer can be derived from structured records rather than from informal communication channels.
+
+\section{Conclusion}
+The methodology of \systemName{} is therefore a combination of layered architecture, iterative delivery, role-based design, policy-aware workflows, and data-centric modeling. These choices are appropriate for a complex institutional system because they balance usability, modularity, and traceable rule enforcement. The next chapter shows how these methodological choices materialize in the actual implementation and what results can be inferred from the codebase.
+
+\chapter{Implementation, Results and Discussions}
+
+\section{Introduction}
+This chapter explains how the planned architecture was implemented in the repository and what results can be observed from the completed codebase. Since the project analysis was performed from source files rather than from a live deployed production server, the reported results are implementation-oriented and evidence-based. In other words, this chapter emphasizes what the system demonstrably supports, how the code organizes the behavior, and what measurable scope the repository contains.
+
+\section{Experimental Setup}
+The system is implemented as a modern web application intended to run on a Node.js-enabled environment with a MongoDB database and a standard browser. The codebase uses Next.js App Router pages for the interface layer and route handlers for the application layer. Environment configuration is handled through \filepath{.env.local}, while database connectivity is bootstrapped through a central utility in \filepath{src/lib/db.ts}. Authentication is configured through \filepath{src/lib/auth.ts} and \filepath{src/lib/auth.config.ts}.
+
+The frontend is styled using Tailwind CSS and built from role-specific pages under \filepath{src/app/student}, \filepath{src/app/teacher}, and \filepath{src/app/admin}. Shared structural components such as the dashboard shell, header, and sidebar are located under \filepath{src/components/layout}. The backend is not a separate server project; instead, Next.js route files under \filepath{src/app/api} implement the main business logic. This is an important implementation choice because it reduces architectural fragmentation and keeps API behavior close to the route tree used by the interface.
+
+\begin{table}[H]
+  \centering
+  \caption{Implementation and validation environment}
+  \label{tab:environment}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.7in}Y}
+    \toprule
+    \textbf{Component} & \textbf{Observed or inferred setup} \\
+    \midrule
+    Source repository root & \filepath{d:/SystemDemo} \\
+    Frontend runtime & Next.js application with React and TypeScript \\
+    Data store & MongoDB Atlas through Mongoose models \\
+    Authentication mode & Credentials-based login with JWT-backed session strategy \\
+    Mail channel & Nodemailer helper functions for system-generated email \\
+    PDF output & pdf-lib based generation of student identity cards \\
+    Validation basis & Static repository inspection, route analysis, data-model analysis, and workflow tracing \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Evaluation Metrics}
+Because the project is a workflow platform rather than a numerical simulation, the evaluation must focus on system completeness, rule enforcement, maintainability, and operational coverage. The following metrics are therefore used to discuss results.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation metrics used for implementation discussion}
+  \label{tab:evaluation-metrics}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.8in}Y}
+    \toprule
+    \textbf{Metric} & \textbf{Meaning in this project} \\
+    \midrule
+    Functional coverage & Number and diversity of academic workflows supported by the codebase \\
+    Role isolation & Strength of separation among student, teacher, and admin pages and APIs \\
+    Workflow automation & Degree to which approval, publishing, notification, and cleanup steps are encoded in software \\
+    Data modeling depth & Breadth and clarity of persistent entities used to represent institutional operations \\
+    Interface completeness & Availability of pages and controls for each role-specific responsibility \\
+    Integration level & Extent to which modules share data and context instead of remaining isolated tools \\
+    Maintainability & Modularity of route files, models, and shared helper utilities \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Dataset}
+The project does not use a conventional machine-learning dataset. Instead, its operational dataset is composed of institutional entities and user-generated records. The most important aspect of this dataset is structural richness: each collection participates in a different part of the academic lifecycle and often references several others.
+
+\begin{table}[H]
+  \centering
+  \caption{Operational data handled by \systemName{}}
+  \label{tab:operational-data}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.8in}Y}
+    \toprule
+    \textbf{Data class} & \textbf{Examples of records} \\
+    \midrule
+    Identity records & Admin, teacher, and student user accounts with department, role, activity state, and advisor relations \\
+    Academic-structure records & Sessions, departments, courses, and course sections with academic year and semester context \\
+    Registration records & Registration windows, student course choices, advisor decisions, head decisions, and admission status \\
+    Learning records & Assignments, student submissions, classroom notices, notes, and recommended books \\
+    Attendance records & Live attendance sessions, session codes, lecture history, present-count and summary views \\
+    Result records & Result windows, teacher mark entries, published results, GPA, CGPA, and department ranks \\
+    Communication records & Notices, notifications, and emails triggered by academic events \\
+    Community records & Forum questions, answers, votes, bans, elections, candidates, and votes \\
+    Utility records & Identity-card data derived from student profile and academic context \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Implementation and Results}
+
+\subsection{Authentication, Session Flow, and Routing}
+The authentication subsystem provides the foundation for every other module. The codebase uses a credentials provider backed by MongoDB and bcrypt password verification. Once authenticated, the system injects role, department, current semester, and other profile details into the JWT and session objects. This allows both pages and API routes to react to the user context without repeated database lookups for basic identity claims.
+
+Role enforcement is visible in two places. The first is middleware, which redirects unauthenticated users to the login page and reroutes authenticated users away from pages that do not match their role. The second is the API layer, where individual routes check the caller role before performing sensitive actions. This dual strategy improves defense-in-depth. Even if a user reaches an endpoint manually, the endpoint still validates authority before changing state.
+
+The login experience is intentionally simple: users provide stored credentials, and the system routes them to the correct dashboard after successful authentication. This is a practical implementation choice for an institutional application where the account source of truth is managed by the organization.
+
+\subsection{User, Department, Session, Course, and Section Management}
+Administrative control over institutional structure is implemented through dedicated pages and route handlers. User management is particularly comprehensive. The admin can search, edit, activate, deactivate, and delete users, and can also bulk-import student and teacher accounts from CSV files. The import workflow is significant because it converts a usually tedious onboarding task into a structured process that can generate credentials and preserve department context.
+
+Department management allows creation and maintenance of departments, assignment of department heads, and organization of course offerings. Session management provides the academic timeline within which registration and results operate. Course management is not limited to storing course titles; it also coordinates section creation and teacher assignment. The source analysis shows that default sections can be created automatically and existing empty slots can be reused during assignment, which reduces accidental duplication of offerings.
+
+These modules act as the master data layer of the system. Without them, later features such as registration, classrooms, attendance, and results would lack a stable academic context. Their presence strongly improves the completeness of the project.
+
+\subsection{Registration, Approval, Payment, and Admission}
+The registration module is one of the strongest examples of workflow automation in the repository. Students access an interface that shows open windows, current eligibility, and grouped course selections. Before a request is accepted, the system checks whether the relevant registration window is open and whether the student's previous result has been published when the semester is beyond the initial stage. It also prevents duplicate registration for the same semester and year.
+
+Once submitted, a registration moves through staged approval. Advisors review and approve or reject academic plans. Department heads then perform the second approval step. After both approvals, the student completes a dummy payment process. The payment page clearly represents a placeholder gateway rather than a real payment integration, yet it still serves an important project purpose: it demonstrates how a final confirmation stage can be integrated into the workflow.
+
+When payment is confirmed, the system performs a cascade of meaningful actions. It marks the registration as admitted, resolves the relevant course sections, creates enrollments, updates the student's current semester, and sends notifications or emails. This reveals a mature implementation mindset: the final state transition is not cosmetic but operationally productive.
+
+\subsection{Classroom, Assignments, Submissions, Notes, and Books}
+The classroom module connects course assignments to day-to-day teaching interaction. Students can enter classrooms that correspond to their enrollments and view announcements, assignments, and their submission state. Teachers can manage classroom-specific announcements, create assignments, review student submissions, and interact with the enrolled roster. Because these features are anchored to sections and academic years, the system preserves contextual integrity better than generic messaging platforms.
+
+The notes and books modules enrich the classroom ecosystem. Students can publish academic notes through link-based sharing, and teachers can recommend books tied to course context. These features are small compared to registration or results, but they matter for academic usefulness because they transform the system from a narrow administrative portal into a learning support platform.
+
+Assignment and submission modeling also show sound database separation. Assignments and submissions are stored as distinct entities, which supports one-to-many relations and clearer teacher-side grading or review actions. This is preferable to embedding all submission content directly into assignment documents.
+
+\subsection{Attendance Management}
+Attendance in \systemName{} is handled through both live and manual approaches. Teachers can create a live attendance session that generates a short code. Students submit the code through their attendance page. The backend then verifies that the session is open and that the student is enrolled in the relevant section or an equivalent sibling section for the same course. Once the teacher closes the live session, the records are materialized into attendance history.
+
+The system also supports manual attendance entry, which is important because live-code collection alone does not solve every classroom scenario. Network issues, device limitations, or exceptional cases may require direct teacher control. By preserving both modes, the project addresses real-world operating conditions instead of assuming ideal connectivity.
+
+Another thoughtful aspect is the student attendance summary logic. The code excludes semesters whose results have already been published, which reflects the lifecycle-aware design seen elsewhere in the system. Attendance is therefore treated as an active-semester concern, not as endlessly accumulating noise.
+
+\subsection{Results, GPA, CGPA, and Publication}
+Result management is implemented through a two-stage process: teacher mark entry and admin-controlled publication. Teachers can submit marks only when a matching result window is open. This reduces premature or out-of-cycle grading activity. The admin then closes the window and triggers a substantial backend process that aggregates marks, converts them to percentages, merges duplicate course-code entries when necessary, calculates GPA and CGPA, assigns department rank, and marks the results as published.
+
+This module is particularly impressive because it also performs semester cleanup after publication. Attendance records and sessions are cleared, enrollments are removed, and sections are reset for the next academic cycle. In many projects, result publication ends at generating a table. Here, publication also closes the loop of the semester. That demonstrates a deeper understanding of academic operations as cyclical rather than static.
+
+On the student side, the result page presents semester GPA, rolling CGPA, rank, and merged course outcomes. This is important for usability because raw result records are not always student-friendly. The page therefore acts as a meaningful reporting layer over the data model.
+
+\subsection{Notices, Notifications, and Email Communication}
+Institutional communication in the system happens through three connected channels: on-platform notices, internal notifications, and email messages. Teachers and administrators can create central, department-specific, or classroom-specific notices. Notifications can be generated for affected users, and email helpers can broadcast high-value events such as registration updates, election changes, and result publication.
+
+The benefit of this design is that communication becomes event-driven rather than manually duplicated across channels. When a workflow changes state, the same action that updates the database can also inform the relevant users. This reduces the risk that students remain unaware of an approval, election, or result event.
+
+From a system-design viewpoint, the communication layer also increases cohesion. Notices are not isolated posts; they belong to the institutional context that already exists in the user, department, and classroom models.
+
+\subsection{Election Management}
+The election subsystem demonstrates that \systemName{} was designed for more than academic records. The department head can create elections, define scope by academic criteria, approve or reject candidate applications, open voting, and complete the election. Eligible students can apply and later vote once, while uniqueness constraints ensure that duplicate voting does not occur.
+
+The lifecycle logic is strong enough to support both winner selection and vacant outcomes. When a voting election is advanced to completion, the system can identify the top vote-getter if one exists or mark the position as vacant if necessary. Notifications and emails further improve transparency around election-state changes.
+
+Including elections in the same platform has organizational value. Student leadership activity remains connected to the same verified academic identity used in registration and classroom participation.
+
+\subsection{Forum, Moderation, and Duplicate Detection}
+The forum is a public-facing academic question-and-answer space with several moderation and quality-control features. Users can post, answer, vote, accept answers, and search or sort content. Teachers can ban students from participation when moderation requires it. Post authors can mark accepted answers, which allows the system to distinguish solved content from unresolved discussion.
+
+The most notable feature is duplicate solved-question blocking. Before saving a new post, the system normalizes the title and body, generates sparse vector representations, and compares the question against solved posts. If the similarity exceeds the configured threshold, the user is shown similar solved questions and the duplicate post is blocked. This reduces clutter and helps direct learners toward existing knowledge. Because the vectors are stored on forum posts and refreshed when needed, the feature remains useful over time rather than only for newly created content.
+
+From an academic-project perspective, this module adds originality. It introduces a lightweight information-retrieval technique inside an otherwise administrative platform, showing that the project goes beyond form handling and dashboard construction.
+
+\subsection{Identity-Card Generation and Maintenance Utility}
+The admin identity-card module supports student-range selection and PDF export. Rather than treating identity cards as static design assets, the system generates them programmatically using student data and optional profile images. This is a practical value-add for institutions, and it demonstrates integration between data retrieval and document output.
+
+The codebase also includes a maintenance script, \filepath{src/scripts/reset-keep-admin.ts}, which can clear application data while preserving administrative accounts. Although not part of daily user interaction, this script reflects good development hygiene because it supports controlled resets during testing or demonstrations.
+
+\section{Qualitative Results}
+Several qualitative results emerge from the implementation. First, the user experience is role-focused. Students see dashboards and pages aligned with their academic journey, teachers see course-control surfaces, and administrators see governance tools. This reduces cognitive overload compared with a single all-purpose control panel.
+
+Second, the system achieves strong workflow continuity. Registration leads to enrollment, enrollment leads to classroom access, classroom data leads to attendance and marks, and result publication closes the semester loop. The modules are therefore not merely co-located; they are functionally connected.
+
+Third, the repository demonstrates maintainable separation of concerns. Shared logic is placed in library files, persistent structures in models, interfaces in pages, and request-handling logic in route files. This makes future debugging and feature extension significantly easier than if everything had been written inside a small number of large components.
+
+Fourth, the project includes practical institutional niceties such as CSV import, notifications, email, dummy payment flow, and identity-card generation. These features improve realism and help distinguish the system from a purely academic mock-up.
+
+\section{Quantitative Results}
+Quantitative results in this report are derived from the repository structure observed during analysis. They do not represent runtime performance benchmarks; instead, they measure implementation scope and complexity.
+
+\begin{table}[H]
+  \centering
+  \caption{Quantitative scope metrics extracted from the repository}
+  \label{tab:quantitative-scope}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{2.5in}p{1.0in}Y}
+    \toprule
+    \textbf{Measured artifact} & \textbf{Count} & \textbf{Interpretation} \\
+    \midrule
+    User roles & 3 & Student, teacher, and admin journeys are implemented distinctly \\
+    Page modules under \filepath{src/app} & 34 & Indicates substantial interface coverage across roles and public pages \\
+    API route files under \filepath{src/app/api} & 43 & Shows a wide range of backend workflows and service endpoints \\
+    Persistent Mongoose models & 24 & Reflects a deep domain model rather than a shallow data design \\
+    Shared layout and UI components & 11 & Suggests reuse of common dashboard and interface building blocks \\
+    Approximate lines in \filepath{src/app} & 14,240 & Indicates a large application-surface implementation \\
+    Approximate lines in \filepath{src/models} & 1,028 & Represents meaningful schema and relation complexity \\
+    Approximate lines in \filepath{src/lib} & 618 & Captures shared infrastructure and domain services \\
+    Approximate lines in \filepath{src/components} & 1,056 & Reflects reusable interface support and layout structure \\
+    API handler methods identified & 88 & Combined GET, POST, PATCH, and DELETE workflow endpoints \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Selected feature matrix by user role}
+  \label{tab:role-feature-matrix}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{2.6in}p{0.7in}p{0.7in}p{0.7in}Y}
+    \toprule
+    \textbf{Feature} & \textbf{Student} & \textbf{Teacher} & \textbf{Admin} & \textbf{Observation} \\
+    \midrule
+    Credentials-based login & Yes & Yes & Yes & Single identity layer reused across the whole application \\
+    Registration submission & Yes & No & Oversight & Students initiate, admin manages windows \\
+    Registration approval & No & Yes & Oversight & Advisor and head workflows are teacher-side operations \\
+    Classroom access & Yes & Yes & No & Students consume and teachers manage course spaces \\
+    Attendance operations & Yes & Yes & No & Students mark; teachers create and finalize sessions \\
+    Result processing & View & Entry & Publish & Separation of responsibilities improves academic control \\
+    Notice interaction & View & Create & Create & Targeted communication by role and scope \\
+    Election participation & Yes & Head only & No & Teacher role becomes managerial only when head authority exists \\
+    Forum moderation & Post & Moderate & No & Teacher-led ban control and public Q\&A participation \\
+    Identity-card generation & No & No & Yes & Administrative utility isolated to system governance \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The quantitative scope demonstrates that the project is large enough to justify a detailed full report. The depth of the model layer and the number of route handlers also indicate that the application is more than a front-end interface demo.
+
+\section{Objective Achieved}
+The project objectives stated in Chapter I can now be revisited in terms of implementation evidence.
+
+\begin{table}[H]
+  \centering
+  \caption{Objective-achievement summary}
+  \label{tab:objective-achievement}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{2.3in}Y}
+    \toprule
+    \textbf{Objective} & \textbf{Observed evidence from implementation} \\
+    \midrule
+    Secure role-based access & Credentials login, JWT session propagation, middleware redirection, and API-level role checks \\
+    Registration automation & Registration windows, staged statuses, approvals, payment step, admission, and enrollment creation \\
+    Classroom support & Student and teacher classroom pages, announcements, assignments, submissions, and student list routes \\
+    Attendance digitization & Live attendance sessions, code validation, manual records, summary and detail views \\
+    Result management & Result windows, mark entries, publish-and-cleanup pipeline, GPA, CGPA, and rank calculation \\
+    Communication improvement & Notices, notifications, and email helper templates tied to workflow events \\
+    Community participation & Elections, notes, books, forum posts, answers, voting, and moderation \\
+    Advanced utility support & CSV user import, duplicate solved-question blocking, and identity-card PDF generation \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The evidence strongly suggests that the project has achieved its core objectives. Some features are intentionally simplified, such as the dummy payment stage, but even these simplifications are implemented in a way that supports future extension rather than acting as dead-end placeholders.
+
+\section{Conclusion}
+The implementation results show that \systemName{} is a coherent and ambitious academic software system. Its modules are broad, its workflows are connected, and its repository complexity is appropriate for a substantial final report. The project does not merely digitize forms; it encodes academic processes, communication channels, and participation structures in one platform. The next chapter discusses the broader issues that accompany such a system, especially those related to intellectual property, ethics, law, safety, and society.
+
+\chapter{Societal, Health, Environment, Safety, Ethical, Legal and Cultural Issues}
+
+\section{Intellectual Property}
+Any academic management system must consider intellectual property because it stores and distributes content created by different stakeholders. In \systemName{}, notes, assignment descriptions, announcements, book recommendations, and forum answers may all contain authored material. Departments and teachers should therefore establish clear ownership and reuse policies. For example, a note uploaded by a student through an external link remains the intellectual property of the contributor unless the institution specifies otherwise. Similarly, assignment texts, mark structures, and official notices are institutional or instructor-owned assets that should not be copied into unauthorized channels without permission.
+
+The identity-card module also raises branding and document-control concerns. Institutional logos, signatures, and official layouts must only be used in accordance with university policy. Even when the software can generate a card technically, the institution remains responsible for ensuring that the output format and data fields comply with official standards.
+
+\section{Ethical Issues}
+Ethical considerations are central to a multi-role academic platform. The first ethical issue is fairness in access control. Students should be able to understand how their registration, attendance, or election participation is being evaluated. Opaque rejection without explanation can create distrust. Therefore, workflow states and decision points should remain visible and auditable.
+
+The second ethical issue concerns moderation. The forum allows teacher-led student bans, which can be useful for preventing abuse but could also be misused if not governed by transparent policy. Institutions should define clear standards for moderation, appeal, and reinstatement so that discipline remains fair and proportionate.
+
+The third ethical issue involves automated or semi-automated judgment. The duplicate-question detector should help reduce clutter, but it must not silence genuinely distinct questions that happen to use similar vocabulary. For that reason, explainability and threshold tuning matter. The current lexical approach is ethically preferable to a fully opaque mechanism because it is easier to inspect and reason about, but it still needs careful deployment.
+
+\section{Safety Issues}
+Safety in a digital academic platform includes operational safety and information safety. Operationally, the system should avoid actions that lead to data loss or inconsistent academic records. The implementation already reflects this concern through controlled result windows, approval stages, and explicit lifecycle transitions. However, safety can be improved further through audit logs, soft-delete strategies, and backup procedures.
+
+Information safety concerns include protection of personal data, marks, attendance history, and email addresses. Access control is a first defense, but institutions also need secure hosting, encrypted transport, secret management, and good password hygiene. A compromised admin account would have significant consequences because of its control over user creation and academic configuration.
+
+Attendance safety also includes misuse prevention. If a live attendance code is shared outside the classroom, fraudulent marking becomes possible. The present implementation reduces this risk through session-state and enrollment checks, but future versions could strengthen safety through expiration timers, geofencing, or teacher approval of suspicious cases.
+
+\section{Legal Issues}
+The legal implications of \systemName{} depend on institutional policy and national regulation, but several areas are immediately relevant. Personal data processing must be lawful, minimal, and purpose-bound. Student identities, academic records, and election data are sensitive. Institutions should therefore obtain proper consent where required, define retention periods, and restrict access according to role and necessity.
+
+Email notifications also require responsible handling. Bulk email dispatch should be limited to legitimate academic communication, and addresses should not be exposed to unrelated users. If the platform stores uploaded external links or images, it must ensure that linked material does not violate copyright or policy.
+
+Election records deserve specific legal and governance attention because they may affect student representation. Eligibility rules, tie handling, vote uniqueness, and announcement procedures should align with departmental regulations. The software can enforce rules only after the organization defines them clearly.
+
+\section{Societal, Health, and Cultural Impact}
+The societal impact of the system is largely positive. By centralizing academic workflows, the project can reduce confusion, delay, and repetitive travel for document submission. Students gain better visibility into where they stand in the registration or result process, teachers spend less time on manual record coordination, and administrators gain more structured oversight.
+
+Health implications appear indirectly. Reduced paper movement and fewer in-person procedural queues can lower stress during high-pressure academic periods. However, digital systems can also increase screen time and anxiety if notifications are poorly designed or if students feel they must monitor the platform continuously. Good interface design and reasonable notification frequency are therefore important.
+
+Cultural impact must also be considered. Institutions vary in language, communication style, hierarchy, and comfort with digital self-service. A platform like \systemName{} should ideally support accessible wording, culturally appropriate notice design, and possibly multilingual expansion. What feels intuitive in one academic environment may feel abrupt or overly formal in another.
+
+\section{Environment and Sustainability Impact}
+Digitizing registration, notices, attendance, and identity-card preparation can reduce paper use and repeated printing. This is a direct environmental benefit. Reduced physical travel for signatures, roster verification, and information exchange can also save time and energy, particularly in large campuses.
+
+At the same time, digital infrastructure is not environmentally neutral. Hosting, database services, and user devices all consume energy. Therefore, the sustainability argument for a system like \systemName{} is strongest when it replaces repetitive paper-heavy processes and is deployed efficiently. Good database design, event-driven communication, and thoughtful feature scope all help avoid unnecessary computational waste.
+
+\begin{table}[H]
+  \centering
+  \caption{Issue summary for broader-impact analysis}
+  \label{tab:broader-issues}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.6in}Y}
+    \toprule
+    \textbf{Issue area} & \textbf{Key concern in \systemName{}} \\
+    \midrule
+    Intellectual property & Ownership and reuse of notes, assignments, notices, branding, and generated documents \\
+    Ethics & Fair approvals, transparent moderation, explainable duplicate detection, and non-discriminatory access \\
+    Safety & Preventing data inconsistency, unauthorized access, and attendance misuse \\
+    Legal & Privacy, consent, institutional regulation, and governance of election and student data \\
+    Societal and cultural & Digital inclusion, clarity of workflows, language accessibility, and user trust \\
+    Environmental & Reduced paper use and process travel balanced against server and device energy consumption \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\chapter{Addressing Complex Engineering Problems and Activities}
+
+\section{Complex Engineering Problems Associated with the Project}
+\systemName{} addresses several complex engineering problems because the difficulty lies not only in coding interfaces but in coordinating multiple constrained workflows over shared institutional data.
+
+\begin{table}[H]
+  \centering
+  \caption{Complex engineering problems addressed by the project}
+  \label{tab:complex-problems}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.1in}p{2.0in}Y}
+    \toprule
+    \textbf{Code} & \textbf{Problem} & \textbf{How \systemName{} addresses it} \\
+    \midrule
+    CEP-1 & Multi-stakeholder policy workflow & Registration and results require coordinated action from students, teachers, heads, and administrators under explicit policy windows \\
+    CEP-2 & Shared-state consistency & Enrollments, classrooms, attendance, and results are connected so that one transition correctly updates the next stage \\
+    CEP-3 & Security under role diversity & Middleware and route checks enforce that different users see and mutate only permitted resources \\
+    CEP-4 & Rich institutional data modeling & Twenty-four models are used to represent lifecycles that differ in duration, ownership, and access sensitivity \\
+    CEP-5 & Communication fan-out and traceability & Notices, notifications, and emails are generated from domain events instead of manual duplication \\
+    CEP-6 & Knowledge reuse in public discussion & Duplicate solved-question detection reduces repeated forum clutter through reproducible text similarity logic \\
+    CEP-7 & Lifecycle closure & Result publication includes cleanup of attendance and enrollments, showing system thinking beyond single-screen output \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+These are complex problems because they contain uncertainty, interdependence, and consequence. A mistake in registration logic can affect enrollment. A mistake in result publication can affect ranking and semester progression. A mistake in moderation can affect fairness. The project therefore required more than interface assembly; it required engineering judgment about institutional behavior.
+
+\section{Complex Engineering Activities Associated with the Project}
+The activities undertaken to solve these problems are themselves complex engineering activities. They involve requirement translation, architecture design, full-stack implementation, workflow orchestration, and operational safeguards.
+
+\begin{table}[H]
+  \centering
+  \caption{Complex engineering activities performed in the project}
+  \label{tab:complex-activities}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{1.1in}p{2.0in}Y}
+    \toprule
+    \textbf{Code} & \textbf{Activity} & \textbf{Project evidence} \\
+    \midrule
+    CEA-1 & Requirements decomposition & Separate student, teacher, admin, and public forum journeys mapped into distinct page groups \\
+    CEA-2 & Layered architecture implementation & Use of pages, API routes, models, and shared libraries with clear responsibilities \\
+    CEA-3 & Workflow automation & Registration approval, election lifecycle, result publication, and notification generation are encoded programmatically \\
+    CEA-4 & Data integration & Shared academic context across departments, sessions, courses, sections, users, and results \\
+    CEA-5 & Reliability-oriented design & Window checks, uniqueness checks, enrollment generation, and lifecycle cleanup reduce invalid states \\
+    CEA-6 & Extended utility engineering & Identity-card PDF generation and maintenance reset tooling support real operational use \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+From the viewpoint of engineering education, \systemName{} is valuable because it exercises multiple competency dimensions at once: problem analysis, software architecture, data modeling, security reasoning, process automation, and maintainability planning.
+
+\chapter{Conclusions}
+
+\section{Summary}
+This report presented \systemName{}, an integrated university management platform developed with Next.js, React, TypeScript, Tailwind CSS, MongoDB, Mongoose, and NextAuth. The project addresses a practical and important institutional challenge: academic workflows are often fragmented across disconnected tools, manual approvals, and informal communication channels. By unifying registration, classrooms, attendance, results, notices, elections, notes, books, forum interaction, and identity-card generation in one platform, the system demonstrates a strong full-stack response to that challenge.
+
+The repository analysis shows that the project is broad in functional scope and thoughtful in design. It includes role-based dashboards, 43 API route files, 24 persistent models, workflow windows, notifications, emails, document generation, and duplicate-question detection. These features make the system a substantial academic contribution rather than a minimal proof-of-concept.
+
+\section{Limitations}
+Despite its strengths, the current implementation also has limitations. The payment stage is intentionally a dummy gateway and therefore does not yet support real financial integration. The forum duplicate detector uses lexical similarity rather than semantic embeddings, so conceptually similar but differently worded questions may not always be caught. The project analysis did not reveal a formal automated test suite, which means long-term regression control may depend more heavily on manual validation than is ideal.
+
+The platform also depends on institutional readiness. Accurate departments, sessions, users, and course assignments must exist before the advanced workflows become meaningful. Email delivery depends on correct environment configuration, and operational deployment would still require production hardening, backup strategy, monitoring, and possibly audit logging.
+
+\section{Recommendations and Future Works}
+Several future improvements would make \systemName{} even more robust and institution-ready.
+\begin{enumerate}
+  \item Integrate a real payment gateway with transaction logs and reconciliation support.
+  \item Add automated testing for critical workflows such as registration, attendance, and result publication.
+  \item Introduce audit trails for approvals, moderation, and administrative changes.
+  \item Expand analytics for departments, teachers, and administrators through dashboards and summary reports.
+  \item Enhance the forum similarity engine with semantic embeddings while preserving explainability.
+  \item Provide accessibility and localization improvements, including multilingual support where needed.
+  \item Explore mobile or progressive web application support for better day-to-day student access.
+  \item Strengthen operational security through password-reset flow, rate limiting, and fine-grained permission policies.
+\end{enumerate}
+
+In conclusion, \systemName{} already represents a meaningful integrated academic platform with strong architectural and workflow foundations. With additional testing, deployment hardening, and institution-specific refinements, it has clear potential to evolve from an academic project into a practical production system.
+
+\appendix
+
+\chapter{Directory Overview}
+The repository is organized in a way that supports role-based feature growth while keeping shared concerns centralized.
+
+\begin{table}[H]
+  \centering
+  \caption{High-level directory overview}
+  \label{tab:directory-overview}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{2.0in}Y}
+    \toprule
+    \textbf{Path} & \textbf{Purpose} \\
+    \midrule
+    \filepath{src/app} & App Router pages, role dashboards, public pages, and backend route handlers \\
+    \filepath{src/app/student} & Student-facing pages for registration, classroom, attendance, results, notes, notices, and elections \\
+    \filepath{src/app/teacher} & Teacher-facing pages for classroom control, attendance, results, registrations, notices, books, courses, and advisees \\
+    \filepath{src/app/admin} & Administrative pages for users, departments, courses, sessions, notices, admissions, results, and identity cards \\
+    \filepath{src/app/api} & Route handlers implementing business logic across all system domains \\
+    \filepath{src/models} & Mongoose schema and model definitions for persistent entities \\
+    \filepath{src/lib} & Shared libraries for authentication, database bootstrap, email, notifications, and similarity logic \\
+    \filepath{src/components} & Shared layout and UI components used across the application \\
+    \filepath{src/scripts} & Maintenance or operational scripts such as reset-keep-admin \\
+    \filepath{public} & Static assets used by the application \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\chapter{API Route Inventory}
+Table \ref{tab:api-inventory} lists the backend route files identified during repository analysis. This appendix is included to demonstrate the breadth of the implemented application layer.
+
+\small
+\setlength{\LTpre}{0pt}
+\setlength{\LTpost}{0pt}
+\begin{longtable}{p{1.2in}p{2.8in}p{2.2in}}
+\caption{API inventory of \systemName{}}\label{tab:api-inventory}\\
+\toprule
+\textbf{Domain} & \textbf{Route file} & \textbf{Main responsibility} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Domain} & \textbf{Route file} & \textbf{Main responsibility} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Authentication & \filepath{src/app/api/auth/[...nextauth]/route.ts} & NextAuth entry point for login and session handling \\
+Users & \filepath{src/app/api/users/route.ts} & User listing, creation, CSV import, and admin-level user operations \\
+Users & \filepath{src/app/api/users/[id]/route.ts} & Update, activate, deactivate, and delete single users \\
+Departments & \filepath{src/app/api/departments/route.ts} & Department creation and list retrieval \\
+Departments & \filepath{src/app/api/departments/[id]/route.ts} & Department update and delete actions \\
+Sessions & \filepath{src/app/api/sessions/route.ts} & Academic-session creation and retrieval \\
+Courses & \filepath{src/app/api/courses/route.ts} & Course creation and listing \\
+Courses & \filepath{src/app/api/courses/[id]/route.ts} & Course update and delete operations \\
+Sections & \filepath{src/app/api/sections/route.ts} & Section creation, listing, and assignment support \\
+Sections & \filepath{src/app/api/sections/[id]/route.ts} & Section update, assignment, and delete operations \\
+Registration windows & \filepath{src/app/api/registration-windows/route.ts} & Create and list registration windows \\
+Registration windows & \filepath{src/app/api/registration-windows/[id]/route.ts} & Update or delete a registration window \\
+Registrations & \filepath{src/app/api/registrations/route.ts} & Student registration submission and registration listing \\
+Registrations & \filepath{src/app/api/registrations/[id]/route.ts} & Approvals, rejection, payment completion, and admission transitions \\
+Advisees & \filepath{src/app/api/advisees/route.ts} & Teacher-side advisee and pending-registration retrieval \\
+Student enrollments & \filepath{src/app/api/student/enrollments/route.ts} & Student enrollment retrieval for classroom context \\
+Assignments & \filepath{src/app/api/assignments/route.ts} & Assignment creation and classroom-linked retrieval \\
+Submissions & \filepath{src/app/api/submissions/route.ts} & Student submission creation and teacher-side review retrieval \\
+Attendance & \filepath{src/app/api/attendance/route.ts} & Manual attendance entry and attendance summary operations \\
+Attendance & \filepath{src/app/api/attendance/session/route.ts} & Live attendance session create, update, and close actions \\
+Attendance & \filepath{src/app/api/attendance/detail/route.ts} & Detailed lecture-level attendance views \\
+Results & \filepath{src/app/api/results/route.ts} & Result retrieval and processing support \\
+Results & \filepath{src/app/api/results/[id]/route.ts} & Result update and record-specific actions \\
+Result windows & \filepath{src/app/api/result-windows/route.ts} & Create and list result windows \\
+Result windows & \filepath{src/app/api/result-windows/[id]/route.ts} & Update, close, publish, and cleanup workflow \\
+Mark entries & \filepath{src/app/api/mark-entries/route.ts} & Teacher mark-entry submission for result preparation \\
+Notices & \filepath{src/app/api/notices/route.ts} & Notice creation and list retrieval \\
+Notices & \filepath{src/app/api/notices/[id]/route.ts} & Notice update and delete operations \\
+Notifications & \filepath{src/app/api/notifications/route.ts} & Notification retrieval and read-state handling \\
+Books & \filepath{src/app/api/books/route.ts} & Book recommendation creation and retrieval \\
+Books & \filepath{src/app/api/books/[id]/route.ts} & Book recommendation update and delete operations \\
+Notes & \filepath{src/app/api/notes/route.ts} & Student note sharing and note retrieval \\
+Forum & \filepath{src/app/api/forum/posts/route.ts} & Forum post creation, listing, search, similarity checks, and filtering \\
+Forum & \filepath{src/app/api/forum/posts/[id]/route.ts} & Single post retrieval, update, delete, or voting-related state changes \\
+Forum & \filepath{src/app/api/forum/answers/route.ts} & Forum answer creation and management \\
+Forum & \filepath{src/app/api/forum/ban/route.ts} & Teacher-side forum ban and moderation control \\
+Elections & \filepath{src/app/api/elections/route.ts} & Election creation, listing, application, and vote support \\
+Elections & \filepath{src/app/api/elections/[id]/route.ts} & Election update, lifecycle transition, completion, and delete actions \\
+Elections & \filepath{src/app/api/elections/[id]/candidates/route.ts} & Candidate approval and rejection management \\
+Classroom & \filepath{src/app/api/classroom/[sectionId]/announcements/route.ts} & Classroom-scoped announcement handling \\
+Classroom & \filepath{src/app/api/classroom/[sectionId]/students/route.ts} & Classroom student roster retrieval \\
+Identity cards & \filepath{src/app/api/admin/identity-cards/students/route.ts} & Retrieve student range for card generation \\
+Identity cards & \filepath{src/app/api/admin/identity-cards/pdf/route.ts} & Generate identity-card PDF output \\
+\end{longtable}
+\normalsize
+
+\chapter{Database Model Summary}
+Table \ref{tab:model-summary} summarizes the persistent entities identified in the project. This appendix helps demonstrate that the data layer is extensive and purposefully normalized.
+
+\small
+\begin{longtable}{p{1.8in}p{4.4in}}
+\caption{Persistent model summary of \systemName{}}\label{tab:model-summary}\\
+\toprule
+\textbf{Model} & \textbf{Primary responsibility} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Model} & \textbf{Primary responsibility} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\filepath{User.ts} & Stores admin, teacher, and student identity, credential, department, and role-related profile information \\
+\filepath{Department.ts} & Stores department metadata, head assignment, and organizational structure \\
+\filepath{Session.ts} & Represents academic sessions used across registration and result workflows \\
+\filepath{Course.ts} & Defines course title, code, credit, semester, and departmental ownership \\
+\filepath{CourseSection.ts} & Represents offered sections, academic year, and teacher assignment for courses \\
+\filepath{Enrollment.ts} & Connects admitted students with course sections after registration completion \\
+\filepath{RegistrationWindow.ts} & Controls when semester registration is available \\
+\filepath{Registration.ts} & Stores selected courses, approval status, payment state, and admission workflow for each student \\
+\filepath{ResultWindow.ts} & Controls when marks can be entered and when results can be published \\
+\filepath{Result.ts} & Stores published course and semester result summaries including GPA, CGPA, and rank \\
+\filepath{MarkEntry.ts} & Holds teacher-submitted raw marks before result publication \\
+\filepath{Assignment.ts} & Stores classroom assignments created by teachers \\
+\filepath{Submission.ts} & Stores student submissions tied to assignments \\
+\filepath{AttendanceSession.ts} & Represents live code-based attendance sessions before finalization \\
+\filepath{AttendanceRecord.ts} & Stores finalized lecture attendance history for later reporting \\
+\filepath{Notice.ts} & Stores central, departmental, and classroom announcements \\
+\filepath{Notification.ts} & Stores in-platform notification records for individual users \\
+\filepath{Note.ts} & Stores student-shared note metadata and links \\
+\filepath{BookRecommendation.ts} & Stores teacher-recommended books linked to course context \\
+\filepath{ForumPost.ts} & Stores forum questions, vector metadata, solved state, and moderation-relevant attributes \\
+\filepath{ForumAnswer.ts} & Stores answers, acceptance state, and author interaction in the forum \\
+\filepath{Election.ts} & Stores election definition, status, eligibility context, and result state \\
+\filepath{ElectionCandidate.ts} & Stores student applications to elections and approval state \\
+\filepath{ElectionVote.ts} & Stores election ballots with one-vote-per-student enforcement \\
+\end{longtable}
+\normalsize
+
+\chapter{Report Customization Notes}
+Before final submission, the authors should update the placeholders at the beginning of this \LaTeX{} source file for candidate names, rolls, supervisor name, department, course title, and submission date. If the department requires an official logo, a suitable image can be added near the cover logic. The present document intentionally keeps these fields editable so the report content remains reusable.
+
+The document was written to follow the chapter sequence and front-matter expectations extracted from \filepath{report_format.pdf}. If the department later specifies stricter formatting rules for signature placement, certificate pages, or chapter-heading typography, those can be adjusted in the preamble without rewriting the technical content.
+
+\clearpage
+\addcontentsline{toc}{chapter}{References}
+\begin{thebibliography}{99}
+
+\bibitem{nextjs}
+Vercel, ``Next.js Documentation,'' 2026. [Online]. Available: \url{https://nextjs.org/docs}
+
+\bibitem{react}
+Meta, ``React Documentation,'' 2026. [Online]. Available: \url{https://react.dev}
+
+\bibitem{typescript}
+Microsoft, ``TypeScript Documentation,'' 2026. [Online]. Available: \url{https://www.typescriptlang.org/docs}
+
+\bibitem{tailwind}
+Tailwind Labs, ``Tailwind CSS Documentation,'' 2026. [Online]. Available: \url{https://tailwindcss.com/docs}
+
+\bibitem{mongodb}
+MongoDB Inc., ``MongoDB Manual,'' 2026. [Online]. Available: \url{https://www.mongodb.com/docs}
+
+\bibitem{mongoose}
+Automattic, ``Mongoose Documentation,'' 2026. [Online]. Available: \url{https://mongoosejs.com/docs}
+
+\bibitem{nextauth}
+Auth.js Team, ``Auth.js and NextAuth Documentation,'' 2026. [Online]. Available: \url{https://authjs.dev}
+
+\bibitem{nodemailer}
+A. Reinman, ``Nodemailer Documentation,'' 2026. [Online]. Available: \url{https://nodemailer.com}
+
+\bibitem{pdflib}
+H. Hop, ``pdf-lib Documentation,'' 2026. [Online]. Available: \url{https://pdf-lib.js.org}
+
+\bibitem{moodle}
+Moodle Pty Ltd., ``Moodle Documentation,'' 2026. [Online]. Available: \url{https://docs.moodle.org}
+
+\bibitem{canvas}
+Instructure, ``Canvas Guides,'' 2026. [Online]. Available: \url{https://community.canvaslms.com}
+
+\bibitem{classroom}
+Google, ``Google Classroom Help,'' 2026. [Online]. Available: \url{https://support.google.com/edu/classroom}
+
+\bibitem{owasp}
+OWASP Foundation, ``OWASP Top 10: The Ten Most Critical Web Application Security Risks,'' 2021. [Online]. Available: \url{https://owasp.org/www-project-top-ten/}
+
+\bibitem{pressman}
+R. S. Pressman and B. R. Maxim, \emph{Software Engineering: A Practitioner's Approach}, 9th ed. New York, NY, USA: McGraw-Hill, 2019.
+
+\end{thebibliography}
+
+\end{document}
