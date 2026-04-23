@@ -18,7 +18,7 @@ The application uses a credentials-based login flow backed by MongoDB. Passwords
 
 - Role-based dashboard
 - Semester registration workflow
-- Dummy payment step for registration completion
+- Stripe Checkout payment step for registration completion
 - Classroom access and assignment workflows
 - Attendance view
 - Result view
@@ -85,7 +85,7 @@ The registration workflow is approval-based:
 1. Student submits a registration request.
 2. Advisor approves it.
 3. Department head approves it.
-4. Student completes the dummy payment flow.
+4. Student completes the Stripe Checkout payment flow.
 5. The system admits the student and creates enrollments.
 
 Relevant implementation files:
@@ -150,6 +150,9 @@ Create `.env.local`:
 MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/academiaone?retryWrites=true&w=majority
 NEXTAUTH_SECRET=replace-with-a-long-random-secret
 NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
 ```
 
 Notes:
@@ -157,6 +160,7 @@ Notes:
 - `MONGODB_URI` should point to your MongoDB Atlas cluster.
 - If your database password contains reserved URL characters, encode it.
 - Your Atlas network access rules must allow your current IP.
+- Stripe Checkout requires `STRIPE_SECRET_KEY`. Use `STRIPE_WEBHOOK_SECRET` for `/api/webhooks/stripe`.
 
 ### 3. Ensure an admin account exists
 
@@ -232,7 +236,7 @@ Relevant files:
 - The login form is intentionally blank by default and does not preload demo credentials.
 - The forum stores vector encodings automatically for every newly posted question.
 - The duplicate detector can also refresh old solved forum posts that do not yet have the latest stored vector format.
-- A dummy payment interface is used for registration confirmation; it does not process real payments.
+- Registration payments use Stripe Checkout. Admins set the Taka-per-credit rate on each registration window, and students are charged from their selected credit total.
 
 ## Development Notes
 

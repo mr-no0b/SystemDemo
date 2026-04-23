@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { CreditCard, LockKey, ShieldCheck } from "@phosphor-icons/react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowSquareOut, CreditCard, LockKey, ShieldCheck } from "@phosphor-icons/react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +15,14 @@ type RegistrationDetails = {
   semesterLabel: string;
   academicYear: string;
   status: string;
+  billing?: {
+    provider: "Stripe";
+    currency: "BDT";
+    takaPerCredit: number;
+    totalCredits: number;
+    tuitionAmount: number;
+    totalAmount: number;
+  };
   courseOfferingIds: Array<{
     _id: string;
     courseId?: {
@@ -28,11 +36,14 @@ type RegistrationDetails = {
 export default function RegistrationPaymentPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [registration, setRegistration] = useState<RegistrationDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +75,53 @@ export default function RegistrationPaymentPage() {
     };
   }, [params.id, router, toast]);
 
+  useEffect(() => {
+    const stripeSessionId = searchParams.get("stripe_session_id");
+    const paymentState = searchParams.get("payment");
+
+    if (paymentState === "cancelled") {
+      toast("Stripe payment was cancelled.", "error");
+      router.replace(`/student/registration/payment/${params.id}`);
+      return;
+    }
+
+    if (!stripeSessionId) return;
+
+    let cancelled = false;
+
+    async function verifyStripePayment() {
+      setVerifying(true);
+      try {
+        const res = await fetch("/api/payments/stripe/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: stripeSessionId }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error ?? "Stripe payment verification failed");
+        }
+
+        if (!cancelled) {
+          router.replace("/student/registration?payment=success");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast(error instanceof Error ? error.message : "Stripe payment verification failed", "error");
+          router.replace(`/student/registration/payment/${params.id}`);
+        }
+      } finally {
+        if (!cancelled) setVerifying(false);
+      }
+    }
+
+    verifyStripePayment();
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id, router, searchParams, toast]);
+
   const paymentSummary = useMemo(() => {
     const groupedCourses = new Map<string, { code: string; title: string; credits: number }>();
 
@@ -79,40 +137,43 @@ export default function RegistrationPaymentPage() {
     }
 
     const courses = Array.from(groupedCourses.values());
-    const credits = courses.reduce((sum, course) => sum + course.credits, 0);
-    const tuition = credits * 2200;
-    const semesterFee = 2500;
-    const gatewayCharge = 35;
+    const credits =
+      registration?.billing?.totalCredits ??
+      courses.reduce((sum, course) => sum + course.credits, 0);
+    const takaPerCredit = registration?.billing?.takaPerCredit ?? 2200;
+    const tuition = registration?.billing?.tuitionAmount ?? Math.round(credits * takaPerCredit);
 
     return {
       courses,
       credits,
+      takaPerCredit,
       tuition,
-      semesterFee,
-      gatewayCharge,
-      total: tuition + semesterFee + gatewayCharge,
+      total: registration?.billing?.totalAmount ?? tuition,
     };
   }, [registration]);
 
   async function completePayment() {
     if (!registration) return;
     setSubmitting(true);
+    setPaymentError("");
 
     try {
-      const res = await fetch(`/api/registrations/${registration._id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/payments/stripe/checkout", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "pay" }),
+        body: JSON.stringify({ registrationId: registration._id }),
       });
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error ?? "Payment failed");
+      if (!res.ok || !data.success || !data.url) {
+        throw new Error(data.error ?? "Failed to start Stripe Checkout");
       }
 
-      router.replace("/student/registration?payment=success");
+      window.location.assign(data.url);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Payment failed", "error");
+      const message = error instanceof Error ? error.message : "Failed to start Stripe Checkout";
+      setPaymentError(message);
+      toast(message, "error");
       setSubmitting(false);
     }
   }
@@ -135,10 +196,14 @@ export default function RegistrationPaymentPage() {
         <Card className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-indigo-500 font-semibold">Dummy Gateway</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-800">AcademiaOne Secure Checkout</h2>
+              <p className="text-xs uppercase tracking-[0.28em] text-indigo-500 font-semibold">Stripe Checkout</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-800">
+                {verifying ? "Verifying Stripe Payment" : "Pay with Stripe"}
+              </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Complete your semester payment to confirm admission for Semester {registration.semesterLabel} ({registration.academicYear}).
+                {verifying
+                  ? "Please wait while Stripe confirms your payment and admission is finalized."
+                  : `Complete your semester payment on Stripe to confirm admission for Semester ${registration.semesterLabel} (${registration.academicYear}).`}
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
@@ -148,29 +213,25 @@ export default function RegistrationPaymentPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Card Holder</p>
-              <p className="mt-2 text-sm font-semibold text-slate-700">Student Demo Account</p>
-              <p className="mt-1 text-xs text-slate-500">Use this mock gateway to simulate an online payment.</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Payment Processor</p>
+              <p className="mt-2 text-sm font-semibold text-slate-700">Stripe hosted Checkout</p>
+              <p className="mt-1 text-xs text-slate-500">You will be redirected to Stripe to complete payment.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Payment Method</p>
-              <p className="mt-2 text-sm font-semibold text-slate-700">Visa / MasterCard / Mobile Banking</p>
-              <p className="mt-1 text-xs text-slate-500">No real transaction is processed in this demo flow.</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Confirmation</p>
+              <p className="mt-2 text-sm font-semibold text-slate-700">Verified by Stripe</p>
+              <p className="mt-1 text-xs text-slate-500">Admission is completed only after Stripe reports a paid session.</p>
             </div>
           </div>
 
           <div className="rounded-3xl border border-indigo-100 bg-[linear-gradient(135deg,#eef2ff_0%,#ffffff_55%,#f8fafc_100%)] p-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Card Number</span>
-              <span className="font-medium text-slate-700">4242 4242 4242 4242</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <span className="text-slate-500">Expiry</span>
-              <span className="font-medium text-slate-700">12/29</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <span className="text-slate-500">CVV</span>
-              <span className="font-medium tracking-[0.3em] text-slate-700">123</span>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-indigo-500 font-semibold">Secure Redirect</p>
+                <p className="mt-2 text-sm font-semibold text-slate-700">Stripe collects and processes the payment details.</p>
+                <p className="mt-1 text-xs text-slate-500">AcademiaOne receives only the paid Checkout Session confirmation.</p>
+              </div>
+              <ArrowSquareOut size={24} className="text-indigo-600 shrink-0" />
             </div>
           </div>
 
@@ -181,7 +242,7 @@ export default function RegistrationPaymentPage() {
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
               <LockKey size={14} />
-              Sandbox payment
+              Stripe Checkout
             </span>
           </div>
         </Card>
@@ -206,16 +267,12 @@ export default function RegistrationPaymentPage() {
 
           <div className="space-y-2 rounded-2xl bg-slate-50 p-4 text-sm">
             <div className="flex items-center justify-between text-slate-600">
+              <span>Rate per credit</span>
+              <span>BDT {paymentSummary.takaPerCredit.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-600">
               <span>Tuition ({paymentSummary.credits.toFixed(1)} credits)</span>
               <span>BDT {paymentSummary.tuition.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-600">
-              <span>Semester fee</span>
-              <span>BDT {paymentSummary.semesterFee.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-600">
-              <span>Gateway charge</span>
-              <span>BDT {paymentSummary.gatewayCharge.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200 pt-3 font-bold text-slate-800">
               <span>Total</span>
@@ -224,8 +281,18 @@ export default function RegistrationPaymentPage() {
           </div>
 
           <div className="space-y-3">
-            <Button onClick={completePayment} isLoading={submitting} className="w-full justify-center">
-              Pay Now
+            {paymentError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                {paymentError}
+              </div>
+            )}
+            <Button
+              onClick={completePayment}
+              isLoading={submitting || verifying}
+              disabled={registration.status !== "payment_pending"}
+              className="w-full justify-center"
+            >
+              Continue to Stripe
             </Button>
             <Link
               href="/student/registration"

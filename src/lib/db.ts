@@ -8,6 +8,7 @@ import "@/models/Course";
 import "@/models/CourseSection";
 import "@/models/Enrollment";
 import "@/models/Registration";
+import "@/models/RegistrationWindow";
 import "@/models/Assignment";
 import "@/models/Submission";
 import "@/models/AttendanceRecord";

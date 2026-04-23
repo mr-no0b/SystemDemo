@@ -8,6 +8,10 @@ import { Result } from "@/models/Result";
 import { CourseSection } from "@/models/CourseSection";
 import { RegistrationWindow } from "@/models/RegistrationWindow";
 import { SEMESTERS } from "@/types";
+import {
+  buildRegistrationBilling,
+  type BillingCourseInput,
+} from "@/lib/registration-billing";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -50,7 +54,18 @@ export async function GET(req: NextRequest) {
     .sort({ createdAt: -1 })
     .lean();
 
-  return NextResponse.json({ success: true, data: registrations });
+  const registrationsWithBilling = await Promise.all(
+    registrations.map(async (registration) => ({
+      ...registration,
+      billing: await buildRegistrationBilling({
+        semesterLabel: registration.semesterLabel,
+        academicYear: registration.academicYear,
+        courseOfferingIds: registration.courseOfferingIds as BillingCourseInput[],
+      }),
+    }))
+  );
+
+  return NextResponse.json({ success: true, data: registrationsWithBilling });
 }
 
 /**

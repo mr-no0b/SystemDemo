@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, models, model } from "mongoose";
 export interface RegistrationWindowDocument extends Document {
   semesterLabel: string;
   academicYear: string;
+  takaPerCredit: number;
   isOpen: boolean;
   openedBy: mongoose.Types.ObjectId;
   openedAt: Date;
@@ -14,6 +15,7 @@ const RegistrationWindowSchema = new Schema<RegistrationWindowDocument>(
   {
     semesterLabel: { type: String, required: true },
     academicYear: { type: String, required: true },
+    takaPerCredit: { type: Number, required: true, min: 1, default: 2200 },
     isOpen: { type: Boolean, default: true, index: true },
     openedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     openedAt: { type: Date, default: Date.now },

@@ -35,12 +35,36 @@ export async function PATCH(
   }
   await connectDB();
   const { id } = await params;
-  const { isOpen } = await req.json();
+  const { isOpen, takaPerCredit } = await req.json();
 
-  const update: Record<string, unknown> = { isOpen };
-  if (!isOpen) update.closedAt = new Date();
-
-  const win = await RegistrationWindow.findByIdAndUpdate(id, update, { new: true });
+  const win = await RegistrationWindow.findById(id);
   if (!win) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!Number.isFinite(Number(win.takaPerCredit)) || Number(win.takaPerCredit) <= 0) {
+    win.takaPerCredit = 2200;
+  }
+
+  if (typeof isOpen === "boolean") {
+    win.isOpen = isOpen;
+    if (isOpen) {
+      win.closedAt = undefined;
+      win.openedAt = new Date();
+      win.openedBy = session.user.id as unknown as typeof win.openedBy;
+    } else {
+      win.closedAt = new Date();
+    }
+  }
+
+  if (takaPerCredit !== undefined) {
+    const normalizedTakaPerCredit = Number(takaPerCredit);
+    if (!Number.isFinite(normalizedTakaPerCredit) || normalizedTakaPerCredit <= 0) {
+      return NextResponse.json(
+        { error: "A valid Taka per credit amount is required" },
+        { status: 400 }
+      );
+    }
+    win.takaPerCredit = normalizedTakaPerCredit;
+  }
+
+  await win.save();
   return NextResponse.json({ success: true, data: win });
 }

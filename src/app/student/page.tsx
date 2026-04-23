@@ -127,6 +127,25 @@ export default async function StudentDashboard() {
         />
       </div>
 
+      {data.registration?.status === "payment_pending" && (
+        <Card className="mb-6 border-indigo-200 bg-indigo-50">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-indigo-800">Admission payment is ready</p>
+              <p className="text-sm text-indigo-700 mt-1">
+                Complete your Stripe payment to confirm enrollment for Semester {data.registration.semesterLabel}.
+              </p>
+            </div>
+            <Link
+              href={`/student/registration/payment/${data.registration._id}`}
+              className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+            >
+              Pay with Stripe
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* Main grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* Enrolled Courses */}

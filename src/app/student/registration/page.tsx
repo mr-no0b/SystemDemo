@@ -31,6 +31,14 @@ type Registration = {
   semesterLabel: string;
   academicYear: string;
   status: string;
+  billing?: {
+    provider: "Stripe";
+    currency: "BDT";
+    takaPerCredit: number;
+    totalCredits: number;
+    tuitionAmount: number;
+    totalAmount: number;
+  };
   courseOfferingIds: Offering[];
   rejectionReason?: string;
   advisorId?: { name: string };
@@ -38,7 +46,7 @@ type Registration = {
   createdAt: string;
 };
 
-type OpenWindow = { _id: string; semesterLabel: string; academicYear: string };
+type OpenWindow = { _id: string; semesterLabel: string; academicYear: string; takaPerCredit: number };
 
 const STATUS_STEPS = [
   { key: "pending_advisor", label: "Submitted" },
@@ -223,7 +231,7 @@ function RegistrationContent() {
                       }`}
                     >
                       <LockOpen size={12} />
-                      Sem {w.semesterLabel} · {w.academicYear}
+                      Sem {w.semesterLabel} · {w.academicYear} · BDT {Number(w.takaPerCredit ?? 2200).toLocaleString()} / credit
                       {done && <span className="ml-1">(registered)</span>}
                       {!done && !eligible && <span className="ml-1">(prev result pending)</span>}
                     </span>
@@ -335,8 +343,10 @@ function RegistrationContent() {
             )}
             {registration.status === "payment_pending" && (
               <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-                <span className="text-sm text-indigo-700 font-medium">✓ Both approvals received. Pay to get admitted immediately.</span>
-                <Button onClick={() => handlePay(registration._id)} size="sm">Pay &amp; Get Admitted</Button>
+                <span className="text-sm text-indigo-700 font-medium">
+                  ✓ Both approvals received. Pay {registration.billing ? `BDT ${registration.billing.totalAmount.toLocaleString()}` : "now"} with Stripe to get admitted.
+                </span>
+                <Button onClick={() => handlePay(registration._id)} size="sm">Pay with Stripe</Button>
               </div>
             )}
             {registration.status === "admitted" && (
@@ -428,6 +438,9 @@ function RegistrationContent() {
                 const selectedCredits = grouped
                   .filter((g) => selectedIds.has(g.representativeId))
                   .reduce((s, g) => s + g.courseId.credits, 0);
+                const selectedAmount = Math.round(
+                  selectedCredits * Number(selectedWindow?.takaPerCredit ?? 2200)
+                );
                 return (
                   <>
                     <div className="space-y-2">
@@ -453,7 +466,7 @@ function RegistrationContent() {
                     </div>
                     {selectedIds.size > 0 && (
                       <div className="mt-3 p-3 bg-indigo-50 rounded-xl text-sm text-indigo-700 font-medium">
-                        Selected: {selectedIds.size} course{selectedIds.size > 1 ? "s" : ""} · {selectedCredits} credits
+                        Selected: {selectedIds.size} course{selectedIds.size > 1 ? "s" : ""} · {selectedCredits} credits · BDT {selectedAmount.toLocaleString()}
                       </div>
                     )}
                   </>

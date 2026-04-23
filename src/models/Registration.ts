@@ -20,6 +20,10 @@ export interface RegistrationDocument extends Document {
   headId?: mongoose.Types.ObjectId;
   headApprovedAt?: Date;
   paymentCompletedAt?: Date;
+  paymentProvider?: "Stripe";
+  paymentAmount?: number;
+  paymentCurrency?: "BDT";
+  paymentReference?: string;
   adminAdmittedAt?: Date;
   adminAdmittedBy?: mongoose.Types.ObjectId;
   rejectionReason?: string;
@@ -59,6 +63,10 @@ const RegistrationSchema = new Schema<RegistrationDocument>(
     headId: { type: Schema.Types.ObjectId, ref: "User" },
     headApprovedAt: { type: Date },
     paymentCompletedAt: { type: Date },
+    paymentProvider: { type: String, enum: ["Stripe"] },
+    paymentAmount: { type: Number, min: 0 },
+    paymentCurrency: { type: String, enum: ["BDT"], default: "BDT" },
+    paymentReference: { type: String },
     adminAdmittedAt: { type: Date },
     adminAdmittedBy: { type: Schema.Types.ObjectId, ref: "User" },
     rejectionReason: { type: String },

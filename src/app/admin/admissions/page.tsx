@@ -7,13 +7,14 @@ import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Spinner, EmptyState } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { GraduationCap, CalendarBlank, LockOpen, LockSimple, Plus, Trash } from "@phosphor-icons/react";
+import { GraduationCap, CalendarBlank, CreditCard, LockOpen, LockSimple, Plus, Trash } from "@phosphor-icons/react";
 import { SEMESTERS } from "@/types";
 
 type RegWindow = {
   _id: string;
   semesterLabel: string;
   academicYear: string;
+  takaPerCredit: number;
   isOpen: boolean;
   openedBy?: { name: string };
   openedAt: string;
@@ -42,7 +43,11 @@ export default function AdminAdmissionsPage() {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [windowsLoading, setWindowsLoading] = useState(true);
   const [showWindowModal, setShowWindowModal] = useState(false);
-  const [windowForm, setWindowForm] = useState({ semesterLabel: "1-1", academicYear: "" });
+  const [windowForm, setWindowForm] = useState({
+    semesterLabel: "1-1",
+    academicYear: "",
+    takaPerCredit: "2200",
+  });
   const [windowSubmitting, setWindowSubmitting] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -77,16 +82,27 @@ export default function AdminAdmissionsPage() {
   }, [activeTab, statusFilter]);
 
   async function handleOpenWindow() {
+    const takaPerCredit = Number(windowForm.takaPerCredit);
+    if (!windowForm.academicYear) return addToast("Select a session first", "error");
+    if (!Number.isFinite(takaPerCredit) || takaPerCredit <= 0) {
+      return addToast("Enter a valid Taka per credit amount", "error");
+    }
+
     setWindowSubmitting(true);
     const res = await fetch("/api/registration-windows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(windowForm),
+      body: JSON.stringify({
+        semesterLabel: windowForm.semesterLabel,
+        academicYear: windowForm.academicYear,
+        takaPerCredit,
+      }),
     });
     const d = await res.json();
     if (d.success) {
       addToast("Registration window opened!", "success");
       setShowWindowModal(false);
+      setWindowForm({ semesterLabel: "1-1", academicYear: "", takaPerCredit: "2200" });
       fetchWindows();
     } else addToast(d.error || "Failed", "error");
     setWindowSubmitting(false);
@@ -180,7 +196,7 @@ export default function AdminAdmissionsPage() {
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {w.academicYear} · Opened by {w.openedBy?.name ?? "Admin"} · {new Date(w.openedAt).toLocaleDateString()}
+                            {w.academicYear} · BDT {Number(w.takaPerCredit ?? 2200).toLocaleString()} / credit · Opened by {w.openedBy?.name ?? "Admin"} · {new Date(w.openedAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -300,12 +316,31 @@ export default function AdminAdmissionsPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Taka per Credit *</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                BDT
+              </span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                className="w-full border border-slate-200 rounded-xl pl-12 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                value={windowForm.takaPerCredit}
+                onChange={(e) => setWindowForm((f) => ({ ...f, takaPerCredit: e.target.value }))}
+              />
+            </div>
+          </div>
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 space-y-1">
             <p className="font-semibold">What happens next:</p>
             <ol className="list-decimal list-inside space-y-0.5">
               <li>Eligible students apply and select their courses.</li>
               <li>Advisor reviews → Department Head approves.</li>
-              <li>Student pays → <strong>automatically admitted</strong> (no admin step).</li>
+              <li>
+                Student pays with <span className="inline-flex items-center gap-1 font-semibold"><CreditCard size={12} />Stripe</span> → <strong>automatically admitted</strong>.
+              </li>
             </ol>
           </div>
         </div>

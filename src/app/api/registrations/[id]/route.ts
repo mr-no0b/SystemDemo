@@ -7,6 +7,10 @@ import { User } from "@/models/User";
 import { CourseSection } from "@/models/CourseSection";
 import { createNotification } from "@/lib/notify";
 import { sendEmail, registrationStatusEmail } from "@/lib/email";
+import {
+  buildRegistrationBilling,
+  type BillingCourseInput,
+} from "@/lib/registration-billing";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +22,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .populate({ path: "courseOfferingIds", populate: { path: "courseId", select: "code title credits" } })
     .lean();
   if (!reg) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ success: true, data: reg });
+  const billing = await buildRegistrationBilling({
+    semesterLabel: reg.semesterLabel,
+    academicYear: reg.academicYear,
+    courseOfferingIds: reg.courseOfferingIds as BillingCourseInput[],
+  });
+  return NextResponse.json({ success: true, data: { ...reg, billing } });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -67,68 +76,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, data: reg });
   }
 
-  if (action === "pay" && role === "student" && reg.status === "payment_pending") {
-    // Auto-admit: payment directly triggers admission, no admin step needed
-    reg.status = "admitted";
-    reg.paymentCompletedAt = new Date();
-    reg.adminAdmittedAt = new Date();
-    await reg.save();
-
-    // Resolve any TBA (no-teacher) section IDs to teacher-assigned counterparts
-    const resolvedPayIds: unknown[] = [];
-    for (const offeringId of reg.courseOfferingIds) {
-      const sec = await CourseSection.findById(offeringId).lean() as { courseId: unknown; teacherId?: unknown } | null;
-      if (sec && !sec.teacherId) {
-        // Use the registration's academicYear/semesterLabel (not the TBA section's, which may have wrong back-fill year)
-        const teacherSec = await CourseSection.findOne({
-          courseId: sec.courseId,
-          semesterLabel: reg.semesterLabel,
-          academicYear: reg.academicYear,
-          teacherId: { $exists: true, $ne: null },
-          isActive: true,
-        }).lean() as { _id: unknown } | null;
-        resolvedPayIds.push(teacherSec ? teacherSec._id : offeringId);
-      } else {
-        resolvedPayIds.push(offeringId);
-      }
-    }
-    reg.courseOfferingIds = resolvedPayIds as typeof reg.courseOfferingIds;
-    await reg.save();
-
-    // Create enrollments
-    const payEnrollments = resolvedPayIds.map((offeringId: unknown) => ({
-      studentId: reg.studentId,
-      courseOfferingId: offeringId,
-      semesterLabel: reg.semesterLabel,
-      academicYear: reg.academicYear,
-      registrationId: reg._id,
-    }));
-    await Enrollment.insertMany(payEnrollments, { ordered: false }).catch(() => {});
-
-    // Update student's current semester
-    await User.findByIdAndUpdate(reg.studentId, { currentSemester: reg.semesterLabel });
-
-    const populated = await Registration.findById(reg._id)
-      .populate({
-        path: "courseOfferingIds",
-        select: "courseId section teacherId semesterLabel",
-        populate: [
-          { path: "courseId", select: "code title credits" },
-          { path: "teacherId", select: "name" },
-        ],
-      })
-      .populate("advisorId", "name")
-      .populate("headId", "name")
-      .lean();
-
-    // Notify student of admission
-    const studentPay = await User.findById(reg.studentId).lean();
-    if (studentPay) {
-      await createNotification({ userId: reg.studentId, title: "Enrollment Confirmed ✅", message: `You have been enrolled for Semester ${reg.semesterLabel} (${reg.academicYear}). Welcome!`, type: "registration", link: "/student" });
-      if (studentPay.email) await sendEmail({ to: studentPay.email, subject: "Enrollment Confirmed", html: registrationStatusEmail({ studentName: studentPay.name, status: "admitted", semesterLabel: reg.semesterLabel, academicYear: reg.academicYear }) });
-    }
-
-    return NextResponse.json({ success: true, data: populated });
+  if (action === "pay" && role === "student") {
+    return NextResponse.json(
+      { error: "Use Stripe Checkout to complete this payment." },
+      { status: 400 }
+    );
   }
 
   if (action === "admit" && role === "admin" && (reg.status === "paid" || reg.status === "payment_pending")) {

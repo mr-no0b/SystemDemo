@@ -24,10 +24,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   await connectDB();
-  const { semesterLabel, academicYear } = await req.json();
+  const { semesterLabel, academicYear, takaPerCredit } = await req.json();
+  const normalizedTakaPerCredit = Number(takaPerCredit);
+
   if (!semesterLabel || !academicYear) {
     return NextResponse.json(
       { error: "semesterLabel and academicYear are required" },
+      { status: 400 }
+    );
+  }
+
+  if (!Number.isFinite(normalizedTakaPerCredit) || normalizedTakaPerCredit <= 0) {
+    return NextResponse.json(
+      { error: "A valid Taka per credit amount is required" },
       { status: 400 }
     );
   }
@@ -37,6 +46,9 @@ export async function POST(req: NextRequest) {
   if (existing) {
     existing.isOpen = true;
     existing.closedAt = undefined;
+    existing.openedAt = new Date();
+    existing.openedBy = session.user.id as unknown as typeof existing.openedBy;
+    existing.takaPerCredit = normalizedTakaPerCredit;
     await existing.save();
     return NextResponse.json({ success: true, data: existing });
   }
@@ -44,6 +56,7 @@ export async function POST(req: NextRequest) {
   const win = await RegistrationWindow.create({
     semesterLabel,
     academicYear,
+    takaPerCredit: normalizedTakaPerCredit,
     isOpen: true,
     openedBy: session.user.id,
     openedAt: new Date(),
