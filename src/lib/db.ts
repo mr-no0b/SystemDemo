@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getMongoConnectionConfig } from "@/lib/mongo-config";
 
 // Import all models here so their schemas are always registered before any query runs.
 // This prevents MissingSchemaError when using .populate() across relations.
@@ -23,11 +24,7 @@ import "@/models/Note";
 import "@/models/BookRecommendation";
 import "@/models/Notification";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable in .env.local");
-}
+const { uri: MONGODB_URI } = getMongoConnectionConfig();
 
 interface MongooseCache {
   conn: typeof mongoose | null;

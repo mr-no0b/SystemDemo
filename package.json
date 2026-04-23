@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "reset:keep-admin": "ts-node --project tsconfig.json -r tsconfig-paths/register src/scripts/reset-keep-admin.ts"
+    "bootstrap:admin": "ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/bootstrap-admin.ts",
+    "bootstrap:admin:local": "MONGODB_TARGET=local ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/bootstrap-admin.ts",
+    "bootstrap:admin:global": "MONGODB_TARGET=global ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/bootstrap-admin.ts",
+    "reset:keep-admin": "ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/reset-keep-admin.ts",
+    "reset:keep-admin:local": "MONGODB_TARGET=local ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/reset-keep-admin.ts",
+    "reset:keep-admin:global": "MONGODB_TARGET=global ts-node --compiler-options '{\"module\":\"commonjs\"}' --project tsconfig.json src/scripts/reset-keep-admin.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

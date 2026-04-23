@@ -147,7 +147,9 @@ npm install
 Create `.env.local`:
 
 ```env
-MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/academiaone?retryWrites=true&w=majority
+MONGODB_TARGET=atlas
+MONGODB_URI_ATLAS=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/academiaone?retryWrites=true&w=majority
+MONGODB_URI_LOCAL=mongodb://127.0.0.1:27017/academiaone
 NEXTAUTH_SECRET=replace-with-a-long-random-secret
 NEXTAUTH_URL=http://localhost:3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -157,14 +159,32 @@ STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
 
 Notes:
 
-- `MONGODB_URI` should point to your MongoDB Atlas cluster.
+- `MONGODB_TARGET=atlas` uses `MONGODB_URI_ATLAS` (or `MONGODB_URI` for backward compatibility).
+- `MONGODB_TARGET=local` uses `MONGODB_URI_LOCAL`, or falls back to `mongodb://127.0.0.1:27017/academiaone`.
+- If `MONGODB_TARGET` is omitted, the app prefers Atlas if `MONGODB_URI_ATLAS` or `MONGODB_URI` is set, then falls back to `MONGODB_URI_LOCAL`.
 - If your database password contains reserved URL characters, encode it.
 - Your Atlas network access rules must allow your current IP.
 - Stripe Checkout requires `STRIPE_SECRET_KEY`. Use `STRIPE_WEBHOOK_SECRET` for `/api/webhooks/stripe`.
 
+### Switching Between Atlas And Local MongoDB
+
+Use the same `.env.local` file and change only `MONGODB_TARGET`:
+
+```env
+MONGODB_TARGET=atlas
+```
+
+or
+
+```env
+MONGODB_TARGET=local
+```
+
+The application code and `npm run reset:keep-admin` both use the same selection logic, so the switch applies consistently across the project.
+
 ### 3. Ensure an admin account exists
 
-This project does not include a seed script. Before using the app, your database should contain at least one active admin user with:
+This project does not include a full seed script. Before using the app, your database should contain at least one active admin user with:
 
 - a unique `userId`
 - `role: "admin"`
@@ -172,6 +192,23 @@ This project does not include a seed script. Before using the app, your database
 - a bcrypt-hashed password
 
 The login page does not autofill any credentials, so sign-in always uses database-backed values.
+
+For a fresh local database, you can bootstrap one admin account with:
+
+```bash
+npm run bootstrap:admin:local -- --userId admin --password admin123 --name "Admin"
+```
+
+This command creates or updates an active `admin` user in the currently selected MongoDB target.
+
+Convenience scripts are available for explicit targets:
+
+```bash
+npm run bootstrap:admin:local -- --userId admin --password admin123 --name "Admin"
+npm run bootstrap:admin:global -- --userId admin --password admin123 --name "Admin"
+npm run reset:keep-admin:local
+npm run reset:keep-admin:global
+```
 
 ### 4. Run the development server
 
@@ -196,11 +233,19 @@ npm run reset:keep-admin
 
 ### `npm run reset:keep-admin`
 
-This script clears application data while preserving all existing admin accounts in MongoDB.
+This script clears application data while preserving exactly one admin account in MongoDB.
+
+By default it keeps the admin whose `userId` is `admin`.
+
+You can override that with:
+
+```bash
+npm run reset:keep-admin -- --userId another-admin-id
+```
 
 It removes:
 
-- non-admin users
+- every user except the kept admin
 - departments
 - courses
 - registrations

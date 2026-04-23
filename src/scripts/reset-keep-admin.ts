@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
 import path from "path";
+import { ObjectId } from "mongodb";
+import { getMongoConnectionConfig } from "../lib/mongo-config";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
-const MONGO_URI = process.env.MONGODB_URI!;
-if (!MONGO_URI) throw new Error("MONGODB_URI not set in .env.local");
+const { uri: MONGO_URI, target } = getMongoConnectionConfig();
+const DEFAULT_KEEP_ADMIN_USER_ID = "admin";
 
 const USER_COLLECTION = "users";
 const COLLECTIONS_TO_CLEAR = [
@@ -34,20 +36,41 @@ const COLLECTIONS_TO_CLEAR = [
   "notifications",
 ];
 
+function getKeepAdminUserId(argv: string[]) {
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--userId" && argv[i + 1]?.trim()) {
+      return argv[i + 1].trim();
+    }
+  }
+
+  return process.env.KEEP_ADMIN_USER_ID?.trim() || DEFAULT_KEEP_ADMIN_USER_ID;
+}
+
 async function resetKeepAdmin() {
-  console.log("Connecting to MongoDB...");
+  const keepAdminUserId = getKeepAdminUserId(process.argv.slice(2));
+  console.log(`Connecting to MongoDB (${target})...`);
   await mongoose.connect(MONGO_URI);
   const db = mongoose.connection.db!;
 
-  const admins = await db.collection(USER_COLLECTION).find({ role: "admin" }).project({ userId: 1 }).toArray();
-  if (admins.length === 0) {
-    throw new Error("No admin user found. Aborting so no access account is lost.");
+  const adminToKeep = await db.collection(USER_COLLECTION).findOne(
+    { role: "admin", userId: keepAdminUserId },
+    { projection: { _id: 1, userId: 1, name: 1 } }
+  );
+
+  if (!adminToKeep) {
+    throw new Error(
+      `Admin user "${keepAdminUserId}" not found. Aborting so no access account is lost.`
+    );
   }
 
-  console.log(`Keeping ${admins.length} admin account(s): ${admins.map((admin) => admin.userId).join(", ")}`);
+  console.log(
+    `Keeping single admin account: ${adminToKeep.userId}${adminToKeep.name ? ` (${adminToKeep.name})` : ""}`
+  );
 
-  const userDeletion = await db.collection(USER_COLLECTION).deleteMany({ role: { $ne: "admin" } });
-  console.log(`Removed ${userDeletion.deletedCount} non-admin user(s)`);
+  const userDeletion = await db.collection(USER_COLLECTION).deleteMany({
+    _id: { $ne: adminToKeep._id as ObjectId },
+  });
+  console.log(`Removed ${userDeletion.deletedCount} other user account(s)`);
 
   for (const collectionName of COLLECTIONS_TO_CLEAR) {
     try {
@@ -59,7 +82,7 @@ async function resetKeepAdmin() {
   }
 
   await mongoose.disconnect();
-  console.log("Database reset complete. Admin account(s) preserved.");
+  console.log(`Database reset complete. Only admin "${keepAdminUserId}" was preserved.`);
 }
 
 resetKeepAdmin().catch(async (error) => {
